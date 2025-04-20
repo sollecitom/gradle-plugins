@@ -1,4 +1,4 @@
-rootProject.name = "kotlin-monorepo-monolith-example"
+rootProject.name = "gradle-plugins"
 
 dependencyResolutionManagement {
     versionCatalogs {
