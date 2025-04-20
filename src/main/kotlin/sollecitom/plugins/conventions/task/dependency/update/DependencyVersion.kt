@@ -1,4 +1,4 @@
-package conventions.task.dependency.update
+package sollecitom.plugins.conventions.task.dependency.update
 
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException

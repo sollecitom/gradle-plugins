@@ -1,4 +1,4 @@
-package conventions.task.kotlin
+package sollecitom.plugins.conventions.task.kotlin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project

@@ -1,4 +1,4 @@
-package conventions.task.dependency.update
+package sollecitom.plugins.conventions.task.dependency.update
 
 import com.github.benmanes.gradle.versions.VersionsPlugin
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask

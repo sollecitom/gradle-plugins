@@ -1,6 +1,5 @@
-package conventions.task.test
+package sollecitom.plugins.conventions.task.test
 
-import JvmConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
@@ -10,6 +9,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.kotlin.dsl.KotlinClosure2
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.withType
+import sollecitom.plugins.JvmConfiguration
 import java.util.concurrent.atomic.AtomicLong
 
 abstract class TestTaskConventions : Plugin<Project> {

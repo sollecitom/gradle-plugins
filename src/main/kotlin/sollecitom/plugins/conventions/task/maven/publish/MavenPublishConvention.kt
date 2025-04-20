@@ -1,6 +1,6 @@
-package conventions.task.maven.publish
+package sollecitom.plugins.conventions.task.maven.publish
 
-import RepositoryConfiguration
+import sollecitom.plugins.RepositoryConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension

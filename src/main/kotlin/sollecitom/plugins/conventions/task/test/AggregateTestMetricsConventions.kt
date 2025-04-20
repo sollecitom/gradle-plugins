@@ -1,4 +1,4 @@
-package conventions.task.test
+package sollecitom.plugins.conventions.task.test
 
 import org.gradle.BuildListener
 import org.gradle.BuildResult

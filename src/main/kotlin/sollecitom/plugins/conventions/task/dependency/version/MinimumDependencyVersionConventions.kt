@@ -1,6 +1,5 @@
-package conventions.task.dependency.version
+package sollecitom.plugins.conventions.task.dependency.version
 
-import conventions.task.dependency.version.MinimumDependencyVersionConventions.Extension.Companion.defaultVulnerableDependencies
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
@@ -27,7 +26,7 @@ abstract class MinimumDependencyVersionConventions : Plugin<Project> {
         }
     }
 
-    private val Extension.vulnerableDependencies: List<MinimumDependencyVersion> get() = knownVulnerableDependencies.getOrElse(defaultVulnerableDependencies)
+    private val Extension.vulnerableDependencies: List<MinimumDependencyVersion> get() = knownVulnerableDependencies.getOrElse(Extension.Companion.defaultVulnerableDependencies)
 
     abstract class Extension {
 

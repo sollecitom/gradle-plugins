@@ -1,4 +1,4 @@
-package conventions.task.container.test
+package sollecitom.plugins.conventions.task.container.test
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project

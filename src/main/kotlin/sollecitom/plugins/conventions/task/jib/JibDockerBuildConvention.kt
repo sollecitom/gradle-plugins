@@ -1,17 +1,9 @@
-package conventions.task.jib
+package sollecitom.plugins.conventions.task.jib
 
 import com.google.cloud.tools.jib.gradle.JibExtension
 import com.google.cloud.tools.jib.gradle.JibPlugin
 import com.google.cloud.tools.jib.gradle.PlatformParameters
 import com.google.cloud.tools.jib.gradle.PlatformParametersSpec
-import conventions.task.jib.JibDockerBuildConvention.Extension.Companion.defaultArgs
-import conventions.task.jib.JibDockerBuildConvention.Extension.Companion.defaultImageFormat
-import conventions.task.jib.JibDockerBuildConvention.Extension.Companion.defaultJvmFlags
-import conventions.task.jib.JibDockerBuildConvention.Extension.Companion.defaultLabels
-import conventions.task.jib.JibDockerBuildConvention.Extension.Companion.defaultReproducibleBuild
-import conventions.task.jib.JibDockerBuildConvention.Extension.Companion.defaultTags
-import conventions.task.jib.JibDockerBuildConvention.Extension.Companion.defaultUser
-import conventions.task.jib.JibDockerBuildConvention.Extension.Companion.defaultVolumes
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
@@ -69,14 +61,14 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
     private val currentOperatingSystem: OperatingSystem get() = DefaultNativePlatform.getCurrentOperatingSystem()
     private val currentArchitecture: ArchitectureInternal get() = DefaultNativePlatform.getCurrentArchitecture()
 
-    private val Extension.reproducibleBuildValue: Boolean get() = reproducibleBuild.getOrElse(defaultReproducibleBuild)
-    private val Extension.userValue: String get() = user.getOrElse(defaultUser)
-    private val Extension.imageFormatValue: String get() = imageFormat.getOrElse(defaultImageFormat)
-    private val Extension.tagsValue: List<String> get() = tags.getOrElse(defaultTags)
-    private val Extension.argsValue: List<String> get() = args.getOrElse(defaultArgs)
-    private val Extension.jvmFlagsValue: List<String> get() = jvmFlags.getOrElse(defaultJvmFlags)
-    private val Extension.volumesValue: List<String> get() = volumes.getOrElse(defaultVolumes)
-    private val Extension.labelsValue: Map<String, String> get() = labels.getOrElse(defaultLabels)
+    private val Extension.reproducibleBuildValue: Boolean get() = reproducibleBuild.getOrElse(Extension.Companion.defaultReproducibleBuild)
+    private val Extension.userValue: String get() = user.getOrElse(Extension.Companion.defaultUser)
+    private val Extension.imageFormatValue: String get() = imageFormat.getOrElse(Extension.Companion.defaultImageFormat)
+    private val Extension.tagsValue: List<String> get() = tags.getOrElse(Extension.Companion.defaultTags)
+    private val Extension.argsValue: List<String> get() = args.getOrElse(Extension.Companion.defaultArgs)
+    private val Extension.jvmFlagsValue: List<String> get() = jvmFlags.getOrElse(Extension.Companion.defaultJvmFlags)
+    private val Extension.volumesValue: List<String> get() = volumes.getOrElse(Extension.Companion.defaultVolumes)
+    private val Extension.labelsValue: Map<String, String> get() = labels.getOrElse(Extension.Companion.defaultLabels)
 
     abstract class Extension {
 
