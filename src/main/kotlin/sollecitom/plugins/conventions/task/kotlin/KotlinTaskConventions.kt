@@ -24,7 +24,7 @@ abstract class KotlinTaskConventions : Plugin<Project> {
     companion object {
         private val optIns = emptyList<String>()
         private val optInCompilerArguments = optIns.map { "-opt-in=$it" }
-        private val compilerArgs = optInCompilerArguments + listOf("-Xcontext-receivers", "-Xjsr305=strict", "-Xwarning-level=CONTEXT_RECEIVERS_DEPRECATED:disabled")
+        private val compilerArgs = optInCompilerArguments + listOf("-Xcontext-parameters", "-Xjsr305=strict", "-Xwarning-level=CONTEXT_RECEIVERS_DEPRECATED:disabled")
         private val targetJvmVersion = JvmTarget.JVM_23
     }
 }
