@@ -22,10 +22,10 @@ abstract class MavenPublishConvention : Plugin<Project> {
                     RepositoryConfiguration.Publications.apply(this, project)
                 }
                 publications {
-                    create("$name-maven", MavenPublication::class.java) {
-                        groupId = rootProject.group.toString()
+                    create("${project.name}-maven", MavenPublication::class.java) {
+                        groupId = project.group.toString()
                         artifactId = project.name
-                        version = rootProject.version.toString()
+                        version = project.version.toString()
                         from(components["java"])
                         logger.quiet("Created publication ${groupId}:${artifactId}:${version}")
                     }
