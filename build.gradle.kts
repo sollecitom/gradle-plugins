@@ -3,7 +3,7 @@ plugins {
     `kotlin-dsl`
     alias(libs.plugins.com.github.ben.manes.versions)
     alias(libs.plugins.nl.littlerobots.version.catalog.update)
-    id("maven-publish")
+    `maven-publish`
 }
 
 val projectGroup: String by properties
