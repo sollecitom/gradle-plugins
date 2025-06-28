@@ -11,6 +11,7 @@ object RepositoryConfiguration {
     object BuildScript {
 
         fun apply(config: RepositoryHandler) {
+            config.mavenLocal()
             config.mavenCentral()
         }
     }
