@@ -67,8 +67,6 @@ abstract class DependencyUpdateConvention : Plugin<Project> {
     private companion object {
         const val defaultSortByKey = false
         const val defaultKeepUnusedVersions = true
-        const val defaultKeepUnusedLibraries = true
-        const val defaultKeepUnusedPlugins = true
         const val defaultCheckConstraints = true
         const val defaultCheckBuildEnvironmentConstraints = false
         const val defaultCheckForGradleUpdate = true
