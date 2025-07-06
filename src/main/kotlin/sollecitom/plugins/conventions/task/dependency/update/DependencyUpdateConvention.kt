@@ -52,12 +52,7 @@ abstract class DependencyUpdateConvention : Plugin<Project> {
                 }
                 keep {
                     keepUnusedVersions.set(extension.keep.keepUnusedVersions.getOrElse(defaultKeepUnusedVersions))
-                    keepUnusedLibraries.set(extension.keep.keepUnusedLibraries.getOrElse(defaultKeepUnusedLibraries))
-                    keepUnusedPlugins.set(extension.keep.keepUnusedPlugins.getOrElse(defaultKeepUnusedPlugins))
                     versions.set(extension.keep.versions.getOrElse(emptySet()))
-                    groups.set(extension.keep.groups.getOrElse(emptySet()))
-                    libraries.set(extension.keep.libraries.getOrElse(emptySet()))
-                    plugins.set(extension.keep.plugins.getOrElse(emptySet()))
                 }
                 pin {
                     versions.set(extension.pins.versions.getOrElse(emptySet()))

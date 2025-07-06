@@ -1,17 +1,17 @@
 [versions]
 jib-plugin = "3.4.5"
 # libraries
-kotlin = "2.2.0-RC"
+kotlin = "2.2.0"
 # buildSrc libraries
 semver4j = "3.1.0"
 version-catalog-report-plugin = "0.52.0"
-version-catalog-update-plugin = "0.8.5" # TODO upgrade to "1.0.0"
+version-catalog-update-plugin = "1.0.0"
 
 [libraries]
 com-github-ben-manes-versions = { module = "com.github.ben-manes:gradle-versions-plugin", version.ref = "version-catalog-report-plugin" }
-nl-littlerobots-version-catalog-update = { module = "nl.littlerobots.version-catalog-update:nl.littlerobots.version-catalog-update.gradle.plugin", version.ref = "version-catalog-update-plugin" }
 jib-gradle-plugin = { module = "com.google.cloud.tools:jib-gradle-plugin", version.ref = "jib-plugin" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+nl-littlerobots-version-catalog-update = { module = "nl.littlerobots.version-catalog-update:nl.littlerobots.version-catalog-update.gradle.plugin", version.ref = "version-catalog-update-plugin" }
 # for buildSrc
 semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j" }
 
