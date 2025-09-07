@@ -1,7 +1,7 @@
 #!/usr/bin/env just --justfile
 
 push:
-    git diff --exit-code || git add . && git commit -m "WIP" && git push origin main
+    git add . && git commit -m "WIP" && git push origin main
 
 pull:
     git pull
