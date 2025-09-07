@@ -12,27 +12,36 @@ val currentVersion: String by properties
 group = projectGroup
 version = currentVersion
 
-repositories {
-    mavenCentral()
-    gradlePluginPortal()
-}
+allprojects {
 
-dependencies {
-    implementation(libs.semver4j)
-    implementation(libs.kotlin.gradle.plugin)
-    implementation(libs.nl.littlerobots.version.catalog.update)
-    implementation(libs.com.github.ben.manes.versions)
-    implementation(libs.jib.gradle.plugin)
-}
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
 
-publishing {
-    publications {
-        create("$name-maven", MavenPublication::class.java) {
-            groupId = rootProject.group.toString()
-            artifactId = project.name
-            version = rootProject.version.toString()
-            from(components["java"])
-            logger.quiet("Created publication ${groupId}:${artifactId}:${version}")
+    apply<JavaLibraryPlugin>()
+    apply<KotlinDslPlugin>()
+    apply<MavenPublishPlugin>()
+
+    configure<JavaPluginExtension> {
+        withSourcesJar()
+        withJavadocJar()
+    }
+
+    tasks.withType<AbstractArchiveTask>().configureEach {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
+    }
+
+    publishing {
+        publications {
+            create("${project.name}-maven", MavenPublication::class.java) {
+                groupId = project.rootProject.group.toString()
+                artifactId = project.name
+                version = project.rootProject.version.toString()
+                from(project.components["java"])
+                logger.quiet("Created publication ${groupId}:${artifactId}:${version}")
+            }
         }
     }
 }
