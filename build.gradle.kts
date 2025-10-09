@@ -21,6 +21,9 @@ allprojects {
 
     apply<JavaLibraryPlugin>()
     apply<KotlinDslPlugin>()
+}
+
+subprojects {
     apply<MavenPublishPlugin>()
 
     configure<JavaPluginExtension> {
