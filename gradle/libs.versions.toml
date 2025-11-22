@@ -1,5 +1,5 @@
 [versions]
-jib-plugin = "3.4.5"
+jib-plugin = "3.5.1"
 # libraries
 kotlin = "2.2.21"
 # buildSrc libraries
