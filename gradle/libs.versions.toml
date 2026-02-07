@@ -1,7 +1,7 @@
 [versions]
-jib-plugin = "3.5.2"
+jib-plugin = "3.5.3"
 # libraries
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 # buildSrc libraries
 semver4j = "3.1.0"
 version-catalog-report-plugin = "0.53.0"
