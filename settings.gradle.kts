@@ -1,3 +1,7 @@
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
+}
+
 rootProject.name = "gradle-plugins"
 
 fun component(vararg pathSegments: String) = subProject(rootFolder = "components", pathSegments = pathSegments)

@@ -11,7 +11,7 @@ object Plugins {
         fun configure(plugin: JavaPluginExtension) {
             with(plugin) {
                 toolchain {
-                    languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_23.majorVersion))
+                    languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_25.majorVersion))
                 }
                 withJavadocJar()
                 withSourcesJar()
