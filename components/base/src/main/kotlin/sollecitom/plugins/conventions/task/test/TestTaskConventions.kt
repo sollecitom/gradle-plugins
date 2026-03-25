@@ -2,6 +2,7 @@ package sollecitom.plugins.conventions.task.test
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.TestDescriptor
 import org.gradle.api.tasks.testing.TestResult
@@ -10,18 +11,16 @@ import org.gradle.kotlin.dsl.KotlinClosure2
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.withType
 import sollecitom.plugins.JvmConfiguration
-import java.util.concurrent.atomic.AtomicLong
 
 abstract class TestTaskConventions : Plugin<Project> {
 
     override fun apply(project: Project) {
 
-        val testCount = project.rootProject.extra["testCount"] as AtomicLong
-        val successfulTestCount = project.rootProject.extra["successfulTestCount"] as AtomicLong
-        val failedTestCount = project.rootProject.extra["failedTestCount"] as AtomicLong
-        val skippedTestCount = project.rootProject.extra["skippedTestCount"] as AtomicLong
+        @Suppress("UNCHECKED_CAST")
+        val serviceProvider = project.rootProject.extra[TestMetricsBuildService.SERVICE_NAME] as Provider<TestMetricsBuildService>
 
         project.tasks.withType<Test>().configureEach {
+            usesService(serviceProvider)
             useJUnitPlatform()
             if (isRunningOnRemoteBuildEnvironment()) {
                 maxParallelForks = 1
@@ -48,10 +47,10 @@ abstract class TestTaskConventions : Plugin<Project> {
                         println("\t>   Passed:  ${result.successfulTestCount}")
                         println("\t>   Failed:  ${result.failedTestCount}")
                         println("\t>   Skipped: ${result.skippedTestCount}")
-                        testCount.addAndGet(result.testCount)
-                        successfulTestCount.addAndGet(result.successfulTestCount)
-                        failedTestCount.addAndGet(result.failedTestCount)
-                        skippedTestCount.addAndGet(result.skippedTestCount)
+                        serviceProvider.get().recordResults(
+                            result.testCount, result.successfulTestCount,
+                            result.failedTestCount, result.skippedTestCount
+                        )
                     }
                 })
             )
