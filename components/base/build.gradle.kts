@@ -1,7 +1,9 @@
 dependencies {
     api(libs.semver4j)
     api(libs.nl.littlerobots.version.catalog.update)
-    api(libs.jib.gradle.plugin)
+    api(libs.kotlin.gradle.plugin)
+    api(project(":kotlin-jvm"))
+    compileOnly(libs.jib.gradle.plugin)
 }
 
 gradlePlugin {
@@ -33,6 +35,10 @@ gradlePlugin {
         create("container-based-service-test-conventions") {
             id = "sollecitom.container-based-service-test-conventions"
             implementationClass = "sollecitom.plugins.conventions.task.container.test.ContainerBasedServiceTestConvention"
+        }
+        create("kotlin-library-conventions") {
+            id = "sollecitom.kotlin-library-conventions"
+            implementationClass = "sollecitom.plugins.conventions.KotlinLibraryConventions"
         }
     }
 }
