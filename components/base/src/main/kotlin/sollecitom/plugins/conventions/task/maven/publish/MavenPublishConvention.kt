@@ -21,33 +21,31 @@ abstract class MavenPublishConvention : Plugin<Project> {
         pluginManager.apply(MavenPublishPlugin::class)
         pluginManager.apply(JavaPlugin::class)
 
-        afterEvaluate {
-            extensions.configure<JavaPluginExtension> {
-                withSourcesJar()
-                withJavadocJar()
+        extensions.configure<JavaPluginExtension> {
+            withSourcesJar()
+            withJavadocJar()
+        }
+
+        extensions.configure<PublishingExtension> {
+            repositories {
+                RepositoryConfiguration.Publications.apply(this, project)
             }
 
-            extensions.configure<PublishingExtension> {
-                repositories {
-                    RepositoryConfiguration.Publications.apply(this, project)
-                }
-
-                publications {
-                    create("${project.name}-maven", MavenPublication::class.java) {
-                        groupId = project.group.toString()
-                        artifactId = project.name
-                        version = project.version.toString()
-                        from(components["java"])
-                    }
-                }
-            }
-
-            val coordinates = "${project.group}:${project.name}:${project.version}"
-            tasks.named("publishToMavenLocal") {
-                doLast {
-                    println("Published $coordinates")
+            publications {
+                create("${project.name}-maven", MavenPublication::class.java) {
+                    groupId = project.group.toString()
+                    artifactId = project.name
+                    version = project.version.toString()
+                    from(components["java"])
                 }
             }
         }
+
+        tasks.named("publishToMavenLocal") {
+            doLast {
+                println("Published ${project.group}:${project.name}:${project.version}")
+            }
+        }
+        Unit
     }
 }

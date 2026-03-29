@@ -11,15 +11,12 @@ abstract class MinimumDependencyVersionConventions : Plugin<Project> {
     override fun apply(project: Project) = with(project) {
 
         val settings = project.extensions.create<Extension>("minimumDependencyVersionConventions")
-        afterEvaluate {
-            val vulnerableDependencies = settings.vulnerableDependencies
-            project.configurations.all {
-                resolutionStrategy.eachDependency {
-                    // https://docs.gradle.org/current/userguide/resolution_rules.html
-                    vulnerableDependencies.forEach { vulnerableDependency ->
-                        if (vulnerableDependency.matches(requested)) {
-                            useVersion(vulnerableDependency.minimumVersion.stringValue)
-                        }
+        project.configurations.configureEach {
+            resolutionStrategy.eachDependency {
+                // https://docs.gradle.org/current/userguide/resolution_rules.html
+                settings.vulnerableDependencies.forEach { vulnerableDependency ->
+                    if (vulnerableDependency.matches(requested)) {
+                        useVersion(vulnerableDependency.minimumVersion.stringValue)
                     }
                 }
             }

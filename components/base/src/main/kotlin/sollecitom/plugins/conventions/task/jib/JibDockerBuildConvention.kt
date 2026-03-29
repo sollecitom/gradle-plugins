@@ -25,9 +25,9 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         pluginManager.apply(JibPlugin::class)
         val settings = project.extensions.create<Extension>("jibDockerBuildConvention")
 
+        // afterEvaluate is required here because Jib's extension uses plain String properties (not Gradle Property<T>),
+        // so values must be read after consumers configure the extension
         afterEvaluate {
-            val imageTags = settings.tagsValue
-            val buildTimestamp = Instant.now()
             extensions.configure<JibExtension> {
                 container {
                     args = settings.argsValue
@@ -37,6 +37,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
                     user = settings.userValue
                     setFormat(settings.imageFormatValue)
                     if (!settings.reproducibleBuildValue) {
+                        val buildTimestamp = Instant.now()
                         creationTime.set(buildTimestamp.toString())
                         filesModificationTime.set(buildTimestamp.toString())
                     }
@@ -52,7 +53,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
                 }
                 to {
                     image = settings.serviceImageName.get()
-                    tags = imageTags.toSet()
+                    tags = settings.tagsValue.toSet()
                 }
             }
         }

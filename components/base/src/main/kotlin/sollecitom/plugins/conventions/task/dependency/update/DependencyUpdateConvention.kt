@@ -19,14 +19,12 @@ abstract class DependencyUpdateConvention : Plugin<Project> {
         pluginManager.apply(VersionCatalogUpdatePlugin::class)
         val extension = project.extensions.create<Extension>("versionCatalog")
 
-        afterEvaluate {
-            extensions.configure<VersionCatalogUpdateExtension> {
-                sortByKey.set(false)
-                keep {
-                    keepUnusedVersions.set(true)
-                }
-                versionSelector(extension.versionSelector.getOrElse(VersionSelectors.PREFER_STABLE))
+        extensions.configure<VersionCatalogUpdateExtension> {
+            sortByKey.set(false)
+            keep {
+                keepUnusedVersions.set(true)
             }
+            versionSelector(extension.versionSelector.getOrElse(VersionSelectors.PREFER_STABLE))
         }
     }
 

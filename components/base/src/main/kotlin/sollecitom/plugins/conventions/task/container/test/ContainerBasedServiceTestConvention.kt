@@ -18,20 +18,16 @@ abstract class ContainerBasedServiceTestConvention : Plugin<Project> {
 
         val sourceSet = extensions.getByType<JavaPluginExtension>().sourceSets.create("containerBasedServiceTest")
         val extension = project.extensions.create<Extension>("containerBasedServiceTest")
-        val containerBasedServiceTestTask = tasks.register<Test>("containerBasedServiceTest") {
+        tasks.register<Test>("containerBasedServiceTest") {
             description = "Runs container-based service tests."
             group = "verification"
             useJUnitPlatform()
 
             testClassesDirs = sourceSet.output.classesDirs
             classpath = configurations[sourceSet.runtimeClasspathConfigurationName] + sourceSet.output
+            dependsOn(extension.starterModuleName.map { ":$it:jibDockerBuild" })
         }
-
-        afterEvaluate {
-            containerBasedServiceTestTask.configure {
-                dependsOn(":${extension.starterModuleName.get()}:jibDockerBuild")
-            }
-        }
+        Unit
     }
 
     abstract class Extension {
