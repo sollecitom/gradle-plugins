@@ -22,9 +22,7 @@ abstract class KotlinTaskConventions : Plugin<Project> {
     }
 
     companion object {
-        private val optIns = listOf("kotlin.time.ExperimentalTime")
-        private val optInCompilerArguments = optIns.map { "-opt-in=$it" }
-        private val compilerArgs = optInCompilerArguments + listOf("-Xcontext-parameters", "-Xjsr305=strict")
+        private val compilerArgs = listOf("-Xcontext-parameters", "-Xjsr305=strict")
         private val targetJvmVersion = JvmTarget.JVM_25
     }
 }
