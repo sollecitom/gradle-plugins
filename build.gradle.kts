@@ -45,8 +45,14 @@ subprojects {
                 artifactId = project.name
                 version = project.rootProject.version.toString()
                 from(project.components["java"])
-                logger.quiet("Created publication ${groupId}:${artifactId}:${version}")
             }
+        }
+    }
+
+    val coordinates = "${project.rootProject.group}:${project.name}:${project.rootProject.version}"
+    tasks.named("publishToMavenLocal") {
+        doLast {
+            println("Published $coordinates")
         }
     }
 }

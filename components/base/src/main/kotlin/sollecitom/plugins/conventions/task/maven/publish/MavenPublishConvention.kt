@@ -7,9 +7,11 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
+import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.withType
 import sollecitom.plugins.RepositoryConfiguration
 
 abstract class MavenPublishConvention : Plugin<Project> {
@@ -36,8 +38,14 @@ abstract class MavenPublishConvention : Plugin<Project> {
                         artifactId = project.name
                         version = project.version.toString()
                         from(components["java"])
-                        logger.quiet("Created publication ${groupId}:${artifactId}:${version}")
                     }
+                }
+            }
+
+            val coordinates = "${project.group}:${project.name}:${project.version}"
+            tasks.named("publishToMavenLocal") {
+                doLast {
+                    println("Published $coordinates")
                 }
             }
         }
