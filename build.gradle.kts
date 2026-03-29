@@ -13,6 +13,9 @@ version = currentVersion
 
 allprojects {
 
+    group = projectGroup
+    version = currentVersion
+
     repositories {
         mavenCentral()
         gradlePluginPortal()
