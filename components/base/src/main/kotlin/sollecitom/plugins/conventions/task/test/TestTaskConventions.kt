@@ -5,9 +5,9 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.TestDescriptor
+import org.gradle.api.tasks.testing.TestListener
 import org.gradle.api.tasks.testing.TestResult
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.kotlin.dsl.KotlinClosure2
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.withType
 import sollecitom.plugins.JvmConfiguration
@@ -38,9 +38,11 @@ abstract class TestTaskConventions : Plugin<Project> {
                 junitXml.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/test/${project.name}"))
                 html.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/reports/test/${project.name}"))
             }
-            afterSuite(
-                KotlinClosure2({ descriptor: TestDescriptor, result: TestResult ->
-                    // Only execute on the outermost suite
+            addTestListener(object : TestListener {
+                override fun beforeSuite(suite: TestDescriptor) {}
+                override fun beforeTest(testDescriptor: TestDescriptor) {}
+                override fun afterTest(testDescriptor: TestDescriptor, result: TestResult) {}
+                override fun afterSuite(descriptor: TestDescriptor, result: TestResult) {
                     if (descriptor.parent == null) {
                         println("\t>   Result:  ${result.resultType}")
                         println("\t>   Tests:   ${result.testCount}")
@@ -52,8 +54,8 @@ abstract class TestTaskConventions : Plugin<Project> {
                             result.failedTestCount, result.skippedTestCount
                         )
                     }
-                })
-            )
+                }
+            })
         }
     }
 
