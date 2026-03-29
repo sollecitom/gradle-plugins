@@ -3,7 +3,7 @@ dependencies {
     api(libs.nl.littlerobots.version.catalog.update)
     api(libs.kotlin.gradle.plugin)
     api(project(":kotlin-jvm"))
-    compileOnly(libs.jib.gradle.plugin)
+    api(libs.jib.gradle.plugin)
 }
 
 gradlePlugin {
