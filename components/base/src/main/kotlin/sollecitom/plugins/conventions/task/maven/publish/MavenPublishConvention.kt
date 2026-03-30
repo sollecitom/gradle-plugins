@@ -14,6 +14,7 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.withType
 import sollecitom.plugins.RepositoryConfiguration
 
+/** Convention plugin that configures Maven publishing with sources and javadoc JARs, publishing to Maven Local and GitHub Packages. */
 abstract class MavenPublishConvention : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {

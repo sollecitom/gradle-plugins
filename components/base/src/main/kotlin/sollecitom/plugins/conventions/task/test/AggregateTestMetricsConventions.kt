@@ -4,6 +4,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.extra
 
+/** Root-project convention plugin that registers the shared [TestMetricsBuildService] for aggregating test metrics across all subprojects. Apply this to the root project before applying [TestTaskConventions] to subprojects. */
 abstract class AggregateTestMetricsConventions : Plugin<Project> {
 
     override fun apply(project: Project) {

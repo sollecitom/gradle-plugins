@@ -18,6 +18,7 @@ import org.gradle.nativeplatform.platform.internal.ArchitectureInternal
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import java.time.Instant
 
+/** Convention plugin that configures Jib for building Docker images. Automatically detects the host platform (including Apple Silicon) and configures the target architecture accordingly. */
 abstract class JibDockerBuildConvention : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
@@ -71,36 +72,54 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
     private val Extension.volumesValue: List<String> get() = volumes.getOrElse(Extension.Companion.defaultVolumes)
     private val Extension.labelsValue: Map<String, String> get() = labels.getOrElse(Extension.Companion.defaultLabels)
 
+    /**
+     * Extension for configuring Jib Docker image builds.
+     *
+     * Required properties: [starterClassFullyQualifiedName], [dockerBaseImage], [serviceImageName].
+     * All other properties have sensible defaults (OCI format, "nobody" user, non-reproducible build).
+     */
     abstract class Extension {
 
+        /** Fully qualified name of the main class (required). */
         abstract val starterClassFullyQualifiedName: Property<String>
+        /** Base Docker image to build from (required). */
         abstract val dockerBaseImage: Property<String>
+        /** Target image name for the built image (required). */
         abstract val serviceImageName: Property<String>
 
+        /** Whether to produce reproducible builds with fixed timestamps. Defaults to false. */
         @get:Optional
         abstract val reproducibleBuild: Property<Boolean>
 
+        /** Container volumes. Defaults to empty. */
         @get:Optional
         abstract val volumes: ListProperty<String>
 
+        /** JVM flags passed to the containerized application. Defaults to empty. */
         @get:Optional
         abstract val jvmFlags: ListProperty<String>
 
+        /** Application arguments. Defaults to empty. */
         @get:Optional
         abstract val args: ListProperty<String>
 
+        /** Docker image tags. Defaults to empty. */
         @get:Optional
         abstract val tags: ListProperty<String>
 
+        /** Container image format. Defaults to "OCI". */
         @get:Optional
         abstract val imageFormat: Property<String>
 
+        /** User to run the container as. Defaults to "nobody". */
         @get:Optional
         abstract val user: Property<String>
 
+        /** Image labels. Defaults to empty. */
         @get:Optional
         abstract val labels: MapProperty<String, String>
 
+        /** Environment variables for the container. */
         @get:Optional
         abstract val environment: MapProperty<String, String>
 

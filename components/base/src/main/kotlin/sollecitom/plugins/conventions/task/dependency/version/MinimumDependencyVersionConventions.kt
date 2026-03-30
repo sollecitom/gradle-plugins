@@ -6,6 +6,7 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.Optional
 import org.gradle.kotlin.dsl.create
 
+/** Convention plugin that enforces minimum dependency versions to mitigate known vulnerabilities via Gradle resolution rules. */
 abstract class MinimumDependencyVersionConventions : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
@@ -25,8 +26,10 @@ abstract class MinimumDependencyVersionConventions : Plugin<Project> {
 
     private val Extension.vulnerableDependencies: List<MinimumDependencyVersion> get() = knownVulnerableDependencies.getOrElse(Extension.Companion.defaultVulnerableDependencies)
 
+    /** Extension for specifying dependencies with known vulnerabilities that require minimum version enforcement. */
     abstract class Extension {
 
+        /** List of dependencies with known vulnerabilities. Defaults to an empty list. */
         @get:Optional
         abstract val knownVulnerableDependencies: ListProperty<MinimumDependencyVersion>
 

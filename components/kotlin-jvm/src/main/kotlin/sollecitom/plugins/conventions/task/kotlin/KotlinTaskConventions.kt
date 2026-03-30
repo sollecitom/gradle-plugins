@@ -6,6 +6,7 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+/** Convention plugin that configures all KotlinCompile tasks with the target JVM version, progressive mode, context parameters, and strict JSR-305 nullability. */
 abstract class KotlinTaskConventions : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {

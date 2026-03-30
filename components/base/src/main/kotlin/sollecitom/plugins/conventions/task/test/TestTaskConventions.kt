@@ -12,6 +12,7 @@ import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.withType
 import sollecitom.plugins.JvmConfiguration
 
+/** Convention plugin that configures all Test tasks with JUnit Platform, parallel execution, logging, and aggregated metrics reporting. Reduces parallelism on CI environments. */
 abstract class TestTaskConventions : Plugin<Project> {
 
     override fun apply(project: Project) {

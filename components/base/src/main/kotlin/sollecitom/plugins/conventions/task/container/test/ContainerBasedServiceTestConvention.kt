@@ -12,6 +12,7 @@ import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.register
 
 // TODO rename to ContainerizedServiceTestConvention
+/** Convention plugin that creates a `containerBasedServiceTest` source set and task for running integration tests against a Docker container built by Jib. */
 abstract class ContainerBasedServiceTestConvention : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
@@ -30,10 +31,13 @@ abstract class ContainerBasedServiceTestConvention : Plugin<Project> {
         Unit
     }
 
+    /** Extension for configuring container-based service tests. */
     abstract class Extension {
 
+        /** The Gradle module name containing the Jib-built Docker image that the tests run against. */
         abstract val starterModuleName: Property<String>
     }
 }
 
+/** Shorthand for adding a dependency to the `containerBasedServiceTestImplementation` configuration. */
 fun DependencyHandlerScope.containerBasedServiceTestImplementation(dependency: Any) = "containerBasedServiceTestImplementation"(dependency)

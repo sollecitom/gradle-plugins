@@ -4,10 +4,12 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import java.net.URI
 
+/** Configures Maven repositories for different contexts (build scripts, module dependencies, publications). Internal packages are resolved from Maven Local and GitHub Packages; external packages from Maven Central. */
 object RepositoryConfiguration {
 
     private const val internalGroup = "${ProjectSettings.rootGroupId}.*"
 
+    /** Repositories for resolving buildscript dependencies (plugins, classpath). */
     object BuildScript {
 
         fun apply(config: RepositoryHandler) {
@@ -16,6 +18,7 @@ object RepositoryConfiguration {
         }
     }
 
+    /** Adds a GitHub Packages Maven repository scoped to internal group packages. Credentials are read from project properties or environment variables. */
     object GithubPackages {
 
         fun apply(config: RepositoryHandler, project: Project) {
@@ -33,6 +36,7 @@ object RepositoryConfiguration {
         }
     }
 
+    /** Repositories for publishing artifacts (Maven Local + GitHub Packages). */
     object Publications {
 
         fun apply(config: RepositoryHandler, project: Project) {
@@ -42,6 +46,7 @@ object RepositoryConfiguration {
         }
     }
 
+    /** Repositories for resolving module (project) dependencies. Routes internal packages to Maven Local/GitHub Packages and external packages to Maven Central and Confluent. */
     object Modules {
 
         fun apply(config: RepositoryHandler, project: Project) {

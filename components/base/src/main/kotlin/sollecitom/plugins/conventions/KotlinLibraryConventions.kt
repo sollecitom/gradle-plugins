@@ -16,6 +16,7 @@ import sollecitom.plugins.conventions.task.dependency.version.MinimumDependencyV
 import sollecitom.plugins.conventions.task.kotlin.KotlinTaskConventions
 import sollecitom.plugins.conventions.task.test.TestTaskConventions
 
+/** Convention plugin for Kotlin JVM libraries. Applies Kotlin JVM, java-library, IDEA, test, and dependency version conventions, and configures reproducible archives. */
 abstract class KotlinLibraryConventions : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {

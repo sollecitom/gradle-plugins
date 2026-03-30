@@ -12,6 +12,7 @@ import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.create
 
+/** Convention plugin that configures the version-catalog-update plugin for automated dependency updates. */
 abstract class DependencyUpdateConvention : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
@@ -28,8 +29,10 @@ abstract class DependencyUpdateConvention : Plugin<Project> {
         }
     }
 
+    /** Extension for customizing dependency update behavior. */
     abstract class Extension {
 
+        /** Strategy for selecting dependency versions. Defaults to [VersionSelectors.PREFER_STABLE]. */
         @get:Optional
         abstract val versionSelector: Property<ModuleVersionSelector>
     }

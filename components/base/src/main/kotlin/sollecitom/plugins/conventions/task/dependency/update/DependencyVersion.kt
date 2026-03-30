@@ -5,14 +5,17 @@ import com.vdurmont.semver4j.SemverException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+/** Represents a dependency version with stability detection. Implementations support semver, date-based, and raw string versions. */
 sealed interface DependencyVersion : Comparable<DependencyVersion> {
 
+    /** Whether this version is considered stable (non-pre-release). */
     val isStable: Boolean
     val stringValue: String
 
     companion object
 }
 
+/** A [DependencyVersion] backed by semantic versioning. Stability is determined by semver pre-release rules. */
 class SemverDependencyVersion(private val value: Semver) : DependencyVersion {
 
     override val isStable: Boolean get() = value.isStable
@@ -39,6 +42,7 @@ class SemverDependencyVersion(private val value: Semver) : DependencyVersion {
     }
 }
 
+/** A [DependencyVersion] parsed from a date in YYYYMMDD format. Always considered stable. */
 class DateDependencyVersion(private val releaseDate: LocalDate) : DependencyVersion {
 
     override val isStable = true
@@ -53,6 +57,7 @@ class DateDependencyVersion(private val releaseDate: LocalDate) : DependencyVers
     }
 }
 
+/** A [DependencyVersion] that falls back to raw string comparison. Always considered stable. */
 class RawDependencyVersion(override val stringValue: String) : DependencyVersion {
 
     override val isStable = true
@@ -64,4 +69,5 @@ class RawDependencyVersion(override val stringValue: String) : DependencyVersion
     }
 }
 
+/** Parses a raw version string, trying semver first, then date-based, then raw string fallback. */
 operator fun DependencyVersion.Companion.invoke(rawVersion: String): DependencyVersion = runCatching { SemverDependencyVersion.fromRawVersion(rawVersion) }.getOrElse { runCatching { DateDependencyVersion.fromRawVersion(rawVersion) }.getOrElse { RawDependencyVersion.fromRawVersion(rawVersion) } }
