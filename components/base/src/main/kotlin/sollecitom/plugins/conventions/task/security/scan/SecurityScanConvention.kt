@@ -36,6 +36,7 @@ abstract class SecurityScanConvention : Plugin<Project> {
             systemProperty("securityScan.imageName", extension.imageName.map { it }.getOrElse(""))
             extension.severities.orNull?.let { systemProperty("securityScan.severities", it.joinToString(",")) }
             extension.trivyIgnoreFile.orNull?.let { systemProperty("securityScan.trivyIgnoreFile", it) }
+            extension.trivyVersion.orNull?.let { systemProperty("securityScan.trivyVersion", it) }
         }
         Unit
     }
@@ -56,6 +57,10 @@ abstract class SecurityScanConvention : Plugin<Project> {
         /** Path to a .trivyignore file for suppressing specific CVEs. Defaults to .trivyignore in project root. */
         @get:Optional
         abstract val trivyIgnoreFile: Property<String>
+
+        /** Trivy Docker image version. Defaults to the version bundled in the security-scan library. */
+        @get:Optional
+        abstract val trivyVersion: Property<String>
     }
 }
 
