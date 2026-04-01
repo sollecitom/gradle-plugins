@@ -59,7 +59,9 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
             // CVE fix: versions before 1.26.0 have known vulnerabilities
             MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0"),
             // CVE-2025-24970: SslHandler doesn't correctly validate packets, can lead to native crash when using native SSLEngine
-            MinimumDependencyVersion(group = "io.netty", name = "netty-handler", minimumVersion = "4.1.118.Final")
+            MinimumDependencyVersion(group = "io.netty", name = "netty-handler", minimumVersion = "4.1.132.Final"),
+            // CVE-2026-33870: netty-codec-http vulnerability
+            MinimumDependencyVersion(group = "io.netty", name = "netty-codec-http", minimumVersion = "4.1.132.Final")
         )
     }
 }
