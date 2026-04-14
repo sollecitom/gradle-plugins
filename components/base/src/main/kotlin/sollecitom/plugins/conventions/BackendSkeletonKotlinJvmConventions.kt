@@ -4,8 +4,10 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.gradle.kotlin.dsl.configure
@@ -78,6 +80,10 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
         tasks.withType<AbstractArchiveTask>().configureEach {
             isPreserveFileTimestamps = false
             isReproducibleFileOrder = true
+        }
+
+        tasks.withType<Javadoc>().configureEach {
+            (options as? StandardJavadocDocletOptions)?.addBooleanOption("notimestamp", true)
         }
     }
 }

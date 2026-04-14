@@ -8,6 +8,8 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.gradle.api.publish.tasks.GenerateModuleMetadata
+import org.gradle.api.tasks.javadoc.Javadoc
+import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.get
@@ -25,6 +27,10 @@ abstract class MavenPublishConvention : Plugin<Project> {
         extensions.configure<JavaPluginExtension> {
             withSourcesJar()
             withJavadocJar()
+        }
+
+        tasks.withType<Javadoc>().configureEach {
+            (options as? StandardJavadocDocletOptions)?.addBooleanOption("notimestamp", true)
         }
 
         extensions.configure<PublishingExtension> {

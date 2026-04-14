@@ -1,5 +1,7 @@
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.javadoc.Javadoc
+import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.kotlin.dsl.register
 import org.gradle.process.ExecOperations
 import org.gradle.work.DisableCachingByDefault
@@ -44,6 +46,10 @@ subprojects {
     tasks.withType<AbstractArchiveTask>().configureEach {
         isPreserveFileTimestamps = false
         isReproducibleFileOrder = true
+    }
+
+    tasks.withType<Javadoc>().configureEach {
+        (options as? StandardJavadocDocletOptions)?.addBooleanOption("notimestamp", true)
     }
 
     publishing {

@@ -4,6 +4,8 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import org.gradle.api.tasks.javadoc.Javadoc
+import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType
@@ -46,6 +48,10 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
         tasks.withType<AbstractArchiveTask>().configureEach {
             isPreserveFileTimestamps = false
             isReproducibleFileOrder = true
+        }
+
+        tasks.withType<Javadoc>().configureEach {
+            (options as? StandardJavadocDocletOptions)?.addBooleanOption("notimestamp", true)
         }
 
         extensions.configure<MinimumDependencyVersionConventions.Extension> {
