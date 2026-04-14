@@ -40,6 +40,10 @@ gradlePlugin {
             id = "sollecitom.kotlin-library-conventions"
             implementationClass = "sollecitom.plugins.conventions.KotlinLibraryConventions"
         }
+        create("kotlin-jvm-conventions") {
+            id = "sollecitom.kotlin-jvm-conventions"
+            implementationClass = "sollecitom.plugins.conventions.BackendSkeletonKotlinJvmConventions"
+        }
         create("security-scan-conventions") {
             id = "sollecitom.security-scan-conventions"
             implementationClass = "sollecitom.plugins.conventions.task.security.scan.SecurityScanConvention"

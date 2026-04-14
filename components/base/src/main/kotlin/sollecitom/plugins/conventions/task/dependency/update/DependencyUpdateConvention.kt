@@ -11,6 +11,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.register
 
 /** Convention plugin that configures the version-catalog-update plugin for automated dependency updates. */
 abstract class DependencyUpdateConvention : Plugin<Project> {
@@ -27,6 +28,9 @@ abstract class DependencyUpdateConvention : Plugin<Project> {
             }
             versionSelector(extension.versionSelector.getOrElse(VersionSelectors.PREFER_STABLE))
         }
+
+        tasks.register<UpdateSummaryTask>("updateSummary")
+        Unit
     }
 
     /** Extension for customizing dependency update behavior. */

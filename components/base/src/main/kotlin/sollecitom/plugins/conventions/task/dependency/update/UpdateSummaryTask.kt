@@ -1,70 +1,10 @@
+package sollecitom.plugins.conventions.task.dependency.update
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-import org.gradle.kotlin.dsl.register
 import org.gradle.process.ExecOperations
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
-
-plugins {
-    alias(libs.plugins.kotlin.jvm)
-    `kotlin-dsl`
-    alias(libs.plugins.nl.littlerobots.version.catalog.update)
-    `maven-publish`
-}
-
-val projectGroup: String by properties
-val currentVersion: String by properties
-
-group = projectGroup
-version = currentVersion
-
-allprojects {
-
-    group = projectGroup
-    version = currentVersion
-
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-    }
-
-    apply<JavaLibraryPlugin>()
-    apply<KotlinDslPlugin>()
-}
-
-subprojects {
-    apply<MavenPublishPlugin>()
-
-    configure<JavaPluginExtension> {
-        withSourcesJar()
-        withJavadocJar()
-    }
-
-    tasks.withType<AbstractArchiveTask>().configureEach {
-        isPreserveFileTimestamps = false
-        isReproducibleFileOrder = true
-    }
-
-    publishing {
-        publications {
-            create("${project.name}-maven", MavenPublication::class.java) {
-                groupId = project.rootProject.group.toString()
-                artifactId = project.name
-                version = project.rootProject.version.toString()
-                from(project.components["java"])
-            }
-        }
-    }
-
-    val coordinates = "${project.rootProject.group}:${project.name}:${project.rootProject.version}"
-    tasks.named("publishToMavenLocal") {
-        doLast {
-            println("Published $coordinates")
-        }
-    }
-}
-
-tasks.register<UpdateSummaryTask>("updateSummary")
 
 abstract class UpdateSummaryTask @Inject constructor(
     private val execOperations: ExecOperations
@@ -95,14 +35,6 @@ abstract class UpdateSummaryTask @Inject constructor(
                 }
                 file == "Dockerfile" || file.endsWith("/Dockerfile") -> {
                     summaryLines += summarizeDockerfile(file) ?: "changed: $file"
-                }
-                file.endsWith("/Plugins.kt") -> {
-                    summaryLines += summarizeRegexChange(file, Regex("""VERSION_(\d+)"""), "Java toolchain")
-                        ?: "changed: $file"
-                }
-                file.endsWith("/KotlinTaskConventions.kt") -> {
-                    summaryLines += summarizeRegexChange(file, Regex("""JVM_(\d+)"""), "Kotlin JVM target")
-                        ?: "changed: $file"
                 }
                 else -> summaryLines += "changed: $file"
             }
@@ -146,20 +78,6 @@ abstract class UpdateSummaryTask @Inject constructor(
         return if (currentFrom.isNotEmpty() && previousFrom != currentFrom) {
             val previousDisplay = previousFrom.takeIf { it.isNotEmpty() }?.joinToString("; ")
             "Docker base: ${display(previousDisplay)} → ${currentFrom.joinToString("; ")}"
-        } else {
-            null
-        }
-    }
-
-    private fun summarizeRegexChange(path: String, regex: Regex, label: String): String? {
-        val current = project.projectDir.resolve(path)
-        if (!current.exists()) return null
-
-        val previousValue = regex.find(gitOrNull("show", "HEAD:$path").orEmpty())?.groupValues?.get(1)
-        val currentValue = regex.find(current.readText())?.groupValues?.get(1)
-
-        return if (previousValue != null && currentValue != null && previousValue != currentValue) {
-            "$label: $previousValue → $currentValue"
         } else {
             null
         }
