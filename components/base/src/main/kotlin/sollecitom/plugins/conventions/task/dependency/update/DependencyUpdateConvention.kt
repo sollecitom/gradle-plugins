@@ -12,6 +12,7 @@ import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.register
+import sollecitom.plugins.RepositoryConfiguration
 
 /** Convention plugin that configures the version-catalog-update plugin for automated dependency updates. */
 abstract class DependencyUpdateConvention : Plugin<Project> {
@@ -20,6 +21,7 @@ abstract class DependencyUpdateConvention : Plugin<Project> {
 
         pluginManager.apply(VersionCatalogUpdatePlugin::class)
         val extension = project.extensions.create<Extension>("versionCatalog")
+        RepositoryConfiguration.Modules.apply(repositories, project)
 
         extensions.configure<VersionCatalogUpdateExtension> {
             sortByKey.set(false)
