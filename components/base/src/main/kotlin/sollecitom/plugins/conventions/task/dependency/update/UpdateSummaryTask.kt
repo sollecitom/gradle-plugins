@@ -2,9 +2,10 @@ package sollecitom.plugins.conventions.task.dependency.update
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-import org.gradle.work.DisableCachingByDefault
 import org.gradle.process.ExecOperations
+import org.gradle.work.DisableCachingByDefault
 import java.io.ByteArrayOutputStream
+import java.io.File
 import javax.inject.Inject
 
 @DisableCachingByDefault(because = "This task reads git state and working tree files that are not declared as cacheable inputs.")
@@ -25,8 +26,6 @@ abstract class UpdateSummaryTask @Inject constructor(
             .filter(String::isNotEmpty)
             .toList()
 
-        if (changedFiles.isEmpty()) return
-
         val summaryLines = mutableListOf<String>()
 
         changedFiles.forEach { file ->
@@ -41,6 +40,10 @@ abstract class UpdateSummaryTask @Inject constructor(
                 else -> summaryLines += "changed: $file"
             }
         }
+
+        summaryLines += workspaceEventLines()
+
+        if (summaryLines.isEmpty()) return
 
         summaryLines.distinct().forEach(::println)
     }
@@ -64,7 +67,10 @@ abstract class UpdateSummaryTask @Inject constructor(
                 path == "gradle/wrapper/gradle-wrapper.properties" && key == "distributionUrl" ->
                     "Gradle: ${extractGradleVersion(previousValue)} → ${extractGradleVersion(currentValue)}"
                 path == "gradle.properties" && key == "dockerBaseImageParam" ->
-                    "Java image: ${display(previousValue)} → ${display(currentValue)}"
+                    summarizeImageChange("Java image", previousValue, currentValue)
+                path == "gradle.properties" && key == "dockerRuntimeBaseImageParam" ->
+                    summarizeImageChange("Java runtime image", previousValue, currentValue)
+                path == "gradle.properties" && key in suppressedGradleProperties -> null
                 else -> "$key: ${display(previousValue)} → ${display(currentValue)}"
             }
         }
@@ -92,6 +98,19 @@ abstract class UpdateSummaryTask @Inject constructor(
             .map { it.removePrefix("FROM ").trim() }
             .toList()
 
+    private fun summarizeImageChange(label: String, previousValue: String?, currentValue: String?): String {
+        val previousTag = imageTag(previousValue)
+        val currentTag = imageTag(currentValue)
+        val previousDigest = imageDigest(previousValue)
+        val currentDigest = imageDigest(currentValue)
+
+        return when {
+            previousTag == null || currentTag == null -> "$label: ${display(previousValue)} → ${display(currentValue)}"
+            previousTag == currentTag && previousDigest != currentDigest -> "$label digest refreshed: $currentTag"
+            else -> "$label: $previousTag → $currentTag"
+        }
+    }
+
     private fun parseKeyValueContent(content: String): Map<String, String> {
         val regex = Regex("""^\s*([A-Za-z0-9_.-]+)\s*=\s*"?([^"]*)"?\s*$""")
         return buildMap {
@@ -104,6 +123,27 @@ abstract class UpdateSummaryTask @Inject constructor(
                 }
         }
     }
+
+    private fun workspaceEventLines(): List<String> {
+        val path = System.getenv("WORKSPACE_UPDATE_EVENTS_FILE")?.takeIf(String::isNotBlank) ?: return emptyList()
+        val file = File(path)
+        if (!file.exists()) return emptyList()
+
+        return file.readLines()
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+    }
+
+    private fun imageTag(value: String?): String? {
+        val raw = value?.trim()?.takeIf(String::isNotEmpty) ?: return null
+        val withoutDigest = raw.substringBefore('@')
+        val colonIndex = withoutDigest.lastIndexOf(':')
+        if (colonIndex < 0 || colonIndex == withoutDigest.lastIndexOf('/')) return null
+        return withoutDigest.substring(colonIndex + 1)
+    }
+
+    private fun imageDigest(value: String?): String? =
+        value?.substringAfter('@', "")?.takeIf(String::isNotBlank)
 
     private fun extractGradleVersion(value: String?): String =
         value
@@ -133,6 +173,12 @@ abstract class UpdateSummaryTask @Inject constructor(
             "container-versions.properties",
             "gradle.properties",
             "gradle/wrapper/gradle-wrapper.properties",
+        )
+        val suppressedGradleProperties = setOf(
+            "dockerBaseImageRepository",
+            "dockerBaseImageVariant",
+            "dockerBaseImageMajor",
+            "dockerRuntimeBaseImageVariant",
         )
     }
 }
