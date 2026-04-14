@@ -2,10 +2,12 @@ package sollecitom.plugins.conventions.task.dependency.update
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import org.gradle.process.ExecOperations
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
+@DisableCachingByDefault(because = "This task reads git state and working tree files that are not declared as cacheable inputs.")
 abstract class UpdateSummaryTask @Inject constructor(
     private val execOperations: ExecOperations
 ) : DefaultTask() {
