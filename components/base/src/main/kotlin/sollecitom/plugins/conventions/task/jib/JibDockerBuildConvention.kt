@@ -10,9 +10,12 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.register
 import org.gradle.nativeplatform.platform.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.ArchitectureInternal
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
@@ -25,6 +28,28 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
 
         pluginManager.apply(JibPlugin::class)
         val settings = project.extensions.create<Extension>("jibDockerBuildConvention")
+        val mainSourceSet = extensions.getByType<SourceSetContainer>().named("main")
+        tasks.named("jibDockerBuild") {
+            notCompatibleWithConfigurationCache("Jib's BuildDockerTask stores Project state and currently fails configuration-cache reuse.")
+        }
+        tasks.register<WriteJibImageFingerprintTask>(imageFingerprintTaskName) {
+            description = "Writes a stable fingerprint for the locally built Jib image."
+            group = "build"
+            runtimeClasspath.from(mainSourceSet.map { it.runtimeClasspath })
+            fingerprintFile.set(layout.buildDirectory.file(imageFingerprintFileName))
+            starterClassFullyQualifiedName.set(settings.starterClassFullyQualifiedName)
+            dockerBaseImage.set(settings.dockerBaseImage)
+            serviceImageName.set(settings.serviceImageName)
+            reproducibleBuild.convention(settings.reproducibleBuild).convention(Extension.defaultReproducibleBuild)
+            volumes.convention(settings.volumes).convention(Extension.defaultVolumes)
+            jvmFlags.convention(settings.jvmFlags).convention(Extension.defaultJvmFlags)
+            args.convention(settings.args).convention(Extension.defaultArgs)
+            tags.convention(settings.tags).convention(Extension.defaultTags)
+            imageFormat.convention(settings.imageFormat).convention(Extension.defaultImageFormat)
+            user.convention(settings.user).convention(Extension.defaultUser)
+            labels.convention(settings.labels).convention(Extension.defaultLabels)
+            environment.convention(settings.environment).convention(emptyMap())
+        }
 
         // afterEvaluate is required here because Jib's extension uses plain String properties (not Gradle Property<T>),
         // so values must be read after consumers configure the extension
@@ -34,7 +59,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
                     args = settings.argsValue
                     jvmFlags = settings.jvmFlagsValue
                     volumes = settings.volumesValue
-                    environment = settings.environment.get()
+                    environment = settings.environment.get().toSortedMap()
                     user = settings.userValue
                     setFormat(settings.imageFormatValue)
                     if (!settings.reproducibleBuildValue) {
@@ -42,7 +67,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
                         creationTime.set(buildTimestamp.toString())
                         filesModificationTime.set(buildTimestamp.toString())
                     }
-                    labels.set(settings.labelsValue)
+                    labels.set(settings.labelsValue.toSortedMap())
                     containerizingMode = "exploded"
                     mainClass = settings.starterClassFullyQualifiedName.get()
                 }
@@ -124,7 +149,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         abstract val environment: MapProperty<String, String>
 
         internal companion object {
-            const val defaultReproducibleBuild = false
+            const val defaultReproducibleBuild = true
             const val defaultImageFormat = "OCI"
             const val defaultUser = "nobody"
             val defaultTags = emptyList<String>()
@@ -133,6 +158,11 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
             val defaultVolumes = emptyList<String>()
             val defaultLabels = emptyMap<String, String>()
         }
+    }
+
+    companion object {
+        const val imageFingerprintFileName = "jib-image.fingerprint"
+        const val imageFingerprintTaskName = "writeJibImageFingerprint"
     }
 
     private fun PlatformParametersSpec.configureForOperatingSystem(currentOS: OperatingSystem, currentArchitecture: ArchitectureInternal) {
