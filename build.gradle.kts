@@ -5,6 +5,9 @@ import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.kotlin.dsl.register
 import org.gradle.process.ExecOperations
 import org.gradle.work.DisableCachingByDefault
+import sollecitom.buildsrc.publish.publishableArtifacts
+import sollecitom.buildsrc.publish.publishableProjects
+import sollecitom.buildsrc.publish.WritePublicationStateTask
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
@@ -72,6 +75,13 @@ subprojects {
 }
 
 tasks.register<UpdateSummaryTask>("updateSummary")
+tasks.register<WritePublicationStateTask>("writePublicationState") {
+    dependsOn(publishableProjects().map { "${it.path}:build" })
+    currentVersion.set(project.version.toString())
+    artifactCoordinates.set(publishableArtifacts().map { it.coordinate })
+    artifactPaths.set(publishableArtifacts().map { it.buildFile.absolutePath })
+    outputFile.set(layout.buildDirectory.file("publication-state/publication-state.properties"))
+}
 
 @DisableCachingByDefault(because = "This task reads git state and working tree files that are not declared as cacheable inputs.")
 abstract class UpdateSummaryTask @Inject constructor(

@@ -12,13 +12,13 @@ pull:
     git pull
 
 build:
-    ./gradlew build
+    ./scripts/publish-if-changed.sh
 
 rebuild:
     ./gradlew clean build --refresh-dependencies --rerun-tasks
 
 publish:
-    ./gradlew publishToMavenLocal
+    ./scripts/publish-if-changed.sh
 
 update-dependencies:
     ./gradlew versionCatalogUpdate

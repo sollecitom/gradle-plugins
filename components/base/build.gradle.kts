@@ -28,6 +28,10 @@ gradlePlugin {
             id = "sollecitom.maven-publish-conventions"
             implementationClass = "sollecitom.plugins.conventions.task.maven.publish.MavenPublishConvention"
         }
+        create("publish-if-changed-conventions") {
+            id = "sollecitom.publish-if-changed-conventions"
+            implementationClass = "sollecitom.plugins.conventions.task.maven.publish.PublishIfChangedConvention"
+        }
         create("jib-docker-build-conventions") {
             id = "sollecitom.jib-docker-build-conventions"
             implementationClass = "sollecitom.plugins.conventions.task.jib.JibDockerBuildConvention"
