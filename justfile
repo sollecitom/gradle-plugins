@@ -14,6 +14,9 @@ pull:
 build:
     ./scripts/publish-if-changed.sh
 
+update-internal-dependencies:
+    @:
+
 rebuild:
     ./gradlew clean build --refresh-dependencies --rerun-tasks
 
@@ -30,4 +33,4 @@ update-dependencies:
     ./scripts/update-java.sh
 
 update-all:
-    just update-dependencies && just update-gradle
+    just update-internal-dependencies && just update-dependencies && just update-gradle
