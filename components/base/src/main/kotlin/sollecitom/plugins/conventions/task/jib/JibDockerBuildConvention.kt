@@ -51,35 +51,51 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
             environment.convention(settings.environment).convention(emptyMap())
         }
 
-        // afterEvaluate is required here because Jib's extension uses plain String properties (not Gradle Property<T>),
-        // so values must be read after consumers configure the extension
-        afterEvaluate {
-            extensions.configure<JibExtension> {
-                container {
-                    args = settings.argsValue
-                    jvmFlags = settings.jvmFlagsValue
-                    volumes = settings.volumesValue
-                    environment = settings.environment.get().toSortedMap()
-                    user = settings.userValue
-                    setFormat(settings.imageFormatValue)
-                    if (!settings.reproducibleBuildValue) {
-                        val buildTimestamp = Instant.now()
-                        creationTime.set(buildTimestamp.toString())
-                        filesModificationTime.set(buildTimestamp.toString())
-                    }
-                    labels.set(settings.labelsValue.toSortedMap())
-                    containerizingMode = "exploded"
-                    mainClass = settings.starterClassFullyQualifiedName.get()
+        extensions.configure<JibExtension> {
+            container {
+                setJvmFlags(settings.jvmFlags.orElse(Extension.defaultJvmFlags))
+                user = Extension.defaultUser
+                setFormat(Extension.defaultImageFormat)
+                creationTime.set(EPOCH_TIMESTAMP)
+                filesModificationTime.set(EPOCH_PLUS_SECOND_TIMESTAMP)
+                labels.set(settings.labels.orElse(Extension.defaultLabels))
+                containerizingMode = "exploded"
+                setMainClass(settings.starterClassFullyQualifiedName)
+            }
+            from {
+                setImage(settings.dockerBaseImage)
+                platforms {
+                    configureForOperatingSystem(currentOperatingSystem, currentArchitecture)
                 }
-                from {
-                    image = settings.dockerBaseImage.get()
-                    platforms {
-                        configureForOperatingSystem(currentOperatingSystem, currentArchitecture)
+            }
+            to {
+                setImage(settings.serviceImageName)
+                setTags(settings.tags.map(List<String>::toSet).orElse(emptySet()))
+            }
+        }
+
+        // Jib still exposes eager setters for several container fields.
+        // Sync only those task-local values just before execution instead of relying on project-wide afterEvaluate.
+        jibTaskNames.forEach { taskName ->
+            tasks.named(taskName).configure {
+                doFirst {
+                    extensions.configure<JibExtension> {
+                        container {
+                            setArgs(settings.argsValue)
+                            setVolumes(settings.volumesValue)
+                            setEnvironment(settings.environment.get().toSortedMap())
+                            user = settings.userValue
+                            setFormat(settings.imageFormatValue)
+                            if (settings.reproducibleBuildValue) {
+                                creationTime.set(EPOCH_TIMESTAMP)
+                                filesModificationTime.set(EPOCH_PLUS_SECOND_TIMESTAMP)
+                            } else {
+                                val buildTimestamp = Instant.now().toString()
+                                creationTime.set(buildTimestamp)
+                                filesModificationTime.set(buildTimestamp)
+                            }
+                        }
                     }
-                }
-                to {
-                    image = settings.serviceImageName.get()
-                    tags = settings.tagsValue.toSet()
                 }
             }
         }
@@ -163,6 +179,9 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
     companion object {
         const val imageFingerprintFileName = "jib-image.fingerprint"
         const val imageFingerprintTaskName = "writeJibImageFingerprint"
+        private const val EPOCH_TIMESTAMP = "EPOCH"
+        private const val EPOCH_PLUS_SECOND_TIMESTAMP = "EPOCH_PLUS_SECOND"
+        private val jibTaskNames = listOf("jib", "jibDockerBuild", "jibBuildTar")
     }
 
     private fun PlatformParametersSpec.configureForOperatingSystem(currentOS: OperatingSystem, currentArchitecture: ArchitectureInternal) {
