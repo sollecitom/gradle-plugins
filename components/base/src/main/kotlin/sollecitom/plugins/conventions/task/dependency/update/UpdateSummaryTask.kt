@@ -25,17 +25,27 @@ abstract class UpdateSummaryTask @Inject constructor(
             .map(String::trim)
             .filter(String::isNotEmpty)
             .toList()
+        val gradlePropertiesSummary = if ("gradle.properties" in changedFiles) {
+            summarizeKeyValueFile("gradle.properties")
+        } else {
+            emptyList()
+        }
+        val hasImagePropertySummary = gradlePropertiesSummary.any {
+            it.startsWith("Java image") || it.startsWith("Java runtime image")
+        }
 
         val summaryLines = mutableListOf<String>()
 
         changedFiles.forEach { file ->
             when {
                 file in keyValueFiles -> {
-                    val lines = summarizeKeyValueFile(file)
+                    val lines = if (file == "gradle.properties") gradlePropertiesSummary else summarizeKeyValueFile(file)
                     if (lines.isNotEmpty()) summaryLines += lines
                 }
                 file == "Dockerfile" || file.endsWith("/Dockerfile") -> {
-                    summarizeDockerfile(file)?.let(summaryLines::add)
+                    if (!hasImagePropertySummary) {
+                        summarizeDockerfile(file)?.let(summaryLines::add)
+                    }
                 }
             }
         }
@@ -83,8 +93,17 @@ abstract class UpdateSummaryTask @Inject constructor(
         val currentFrom = extractDockerFromLines(current.readText())
 
         return if (currentFrom.isNotEmpty() && previousFrom != currentFrom) {
-            val previousDisplay = previousFrom.takeIf { it.isNotEmpty() }?.joinToString("; ")
-            "Docker base: ${display(previousDisplay)} → ${currentFrom.joinToString("; ")}"
+            val previousTags = previousFrom.mapNotNull(::dockerStageTag)
+            val currentTags = currentFrom.mapNotNull(::dockerStageTag)
+
+            when {
+                previousTags.isEmpty() || currentTags.isEmpty() ->
+                    "Docker base images changed"
+                previousTags == currentTags ->
+                    "Docker base digests refreshed: ${currentTags.joinToString("; ")}"
+                else ->
+                    "Docker base: ${previousTags.joinToString("; ")} → ${currentTags.joinToString("; ")}"
+            }
         } else {
             null
         }
@@ -143,6 +162,9 @@ abstract class UpdateSummaryTask @Inject constructor(
 
     private fun imageDigest(value: String?): String? =
         value?.substringAfter('@', "")?.takeIf(String::isNotBlank)
+
+    private fun dockerStageTag(stage: String): String? =
+        imageTag(stage.substringBefore(" AS ").trim())
 
     private fun extractGradleVersion(value: String?): String =
         value

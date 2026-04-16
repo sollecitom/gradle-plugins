@@ -30,7 +30,7 @@ update-dependencies:
     ./scripts/update-gradle.sh
 
 @update-java:
-    ./scripts/update-java.sh
+    just -f ../justfile update-java-workspace
 
 update-all:
     just update-internal-dependencies && just update-dependencies && just update-gradle
