@@ -32,12 +32,11 @@ abstract class UpdateSummaryTask @Inject constructor(
             when {
                 file in keyValueFiles -> {
                     val lines = summarizeKeyValueFile(file)
-                    if (lines.isNotEmpty()) summaryLines += lines else summaryLines += "changed: $file"
+                    if (lines.isNotEmpty()) summaryLines += lines
                 }
                 file == "Dockerfile" || file.endsWith("/Dockerfile") -> {
-                    summaryLines += summarizeDockerfile(file) ?: "changed: $file"
+                    summarizeDockerfile(file)?.let(summaryLines::add)
                 }
-                else -> summaryLines += "changed: $file"
             }
         }
 
