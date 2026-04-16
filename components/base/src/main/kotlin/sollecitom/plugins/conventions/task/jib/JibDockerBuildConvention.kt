@@ -79,7 +79,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         jibTaskNames.forEach { taskName ->
             tasks.named(taskName).configure {
                 doFirst {
-                    extensions.configure<JibExtension> {
+                    project.extensions.configure<JibExtension> {
                         container {
                             setArgs(settings.argsValue)
                             setVolumes(settings.volumesValue)
