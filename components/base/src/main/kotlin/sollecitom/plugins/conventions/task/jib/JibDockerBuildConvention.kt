@@ -9,6 +9,7 @@ import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.kotlin.dsl.apply
@@ -19,6 +20,8 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.nativeplatform.platform.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.ArchitectureInternal
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import java.util.AbstractList
+import java.util.AbstractMap
 import java.time.Instant
 
 /** Convention plugin that configures Jib for building Docker images. Automatically detects the host platform (including Apple Silicon) and configures the target architecture accordingly. */
@@ -51,13 +54,34 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
             environment.convention(settings.environment).convention(emptyMap())
         }
 
+        val nonReproducibleTimestampHolder = object {
+            var value: String? = null
+        }
+        val creationTimeProvider = providers.provider {
+            if (settings.reproducibleBuildValue) {
+                EPOCH_TIMESTAMP
+            } else {
+                nonReproducibleTimestampHolder.value ?: Instant.now().toString().also { nonReproducibleTimestampHolder.value = it }
+            }
+        }
+        val filesModificationTimeProvider = providers.provider {
+            if (settings.reproducibleBuildValue) {
+                EPOCH_PLUS_SECOND_TIMESTAMP
+            } else {
+                nonReproducibleTimestampHolder.value ?: Instant.now().toString().also { nonReproducibleTimestampHolder.value = it }
+            }
+        }
+
         extensions.configure<JibExtension> {
             container {
+                setArgs(lazyList(settings.args.orElse(Extension.defaultArgs)))
                 setJvmFlags(settings.jvmFlags.orElse(Extension.defaultJvmFlags))
+                setVolumes(lazyList(settings.volumes.orElse(Extension.defaultVolumes)))
+                setEnvironment(lazyMap(settings.environment.map { value: Map<String, String> -> value.toSortedMap() as Map<String, String> }.orElse(emptyMap())))
                 user = Extension.defaultUser
                 setFormat(Extension.defaultImageFormat)
-                creationTime.set(EPOCH_TIMESTAMP)
-                filesModificationTime.set(EPOCH_PLUS_SECOND_TIMESTAMP)
+                creationTime.set(creationTimeProvider)
+                filesModificationTime.set(filesModificationTimeProvider)
                 labels.set(settings.labels.orElse(Extension.defaultLabels))
                 containerizingMode = "exploded"
                 setMainClass(settings.starterClassFullyQualifiedName)
@@ -73,45 +97,13 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
                 setTags(settings.tags.map(List<String>::toSet).orElse(emptySet()))
             }
         }
-
-        // Jib still exposes eager setters for several container fields.
-        // Sync only those task-local values just before execution instead of relying on project-wide afterEvaluate.
-        jibTaskNames.forEach { taskName ->
-            tasks.named(taskName).configure {
-                doFirst {
-                    project.extensions.configure<JibExtension> {
-                        container {
-                            setArgs(settings.argsValue)
-                            setVolumes(settings.volumesValue)
-                            setEnvironment(settings.environment.get().toSortedMap())
-                            user = settings.userValue
-                            setFormat(settings.imageFormatValue)
-                            if (settings.reproducibleBuildValue) {
-                                creationTime.set(EPOCH_TIMESTAMP)
-                                filesModificationTime.set(EPOCH_PLUS_SECOND_TIMESTAMP)
-                            } else {
-                                val buildTimestamp = Instant.now().toString()
-                                creationTime.set(buildTimestamp)
-                                filesModificationTime.set(buildTimestamp)
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private val currentOperatingSystem: OperatingSystem get() = DefaultNativePlatform.getCurrentOperatingSystem()
     private val currentArchitecture: ArchitectureInternal get() = DefaultNativePlatform.getCurrentArchitecture()
 
     private val Extension.reproducibleBuildValue: Boolean get() = reproducibleBuild.getOrElse(Extension.Companion.defaultReproducibleBuild)
-    private val Extension.userValue: String get() = user.getOrElse(Extension.Companion.defaultUser)
-    private val Extension.imageFormatValue: String get() = imageFormat.getOrElse(Extension.Companion.defaultImageFormat)
     private val Extension.tagsValue: List<String> get() = tags.getOrElse(Extension.Companion.defaultTags)
-    private val Extension.argsValue: List<String> get() = args.getOrElse(Extension.Companion.defaultArgs)
-    private val Extension.jvmFlagsValue: List<String> get() = jvmFlags.getOrElse(Extension.Companion.defaultJvmFlags)
-    private val Extension.volumesValue: List<String> get() = volumes.getOrElse(Extension.Companion.defaultVolumes)
-    private val Extension.labelsValue: Map<String, String> get() = labels.getOrElse(Extension.Companion.defaultLabels)
 
     /**
      * Extension for configuring Jib Docker image builds.
@@ -181,7 +173,6 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         const val imageFingerprintTaskName = "writeJibImageFingerprint"
         private const val EPOCH_TIMESTAMP = "EPOCH"
         private const val EPOCH_PLUS_SECOND_TIMESTAMP = "EPOCH_PLUS_SECOND"
-        private val jibTaskNames = listOf("jib", "jibDockerBuild", "jibBuildTar")
     }
 
     private fun PlatformParametersSpec.configureForOperatingSystem(currentOS: OperatingSystem, currentArchitecture: ArchitectureInternal) {
@@ -201,4 +192,29 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         architecture = "amd64"
         os = "linux"
     }
+
+    private fun lazyList(provider: Provider<List<String>>) = object : AbstractList<String>() {
+        override val size: Int get() = provider.get().size
+        override fun get(index: Int): String = provider.get()[index]
+    }
+
+    private fun lazyMap(provider: Provider<Map<String, String>>) = object : MutableMap<String, String> {
+        override val size: Int get() = provider.get().size
+        override fun isEmpty(): Boolean = provider.get().isEmpty()
+        override fun containsKey(key: String): Boolean = provider.get().containsKey(key)
+        override fun containsValue(value: String): Boolean = provider.get().containsValue(value)
+        override fun get(key: String): String? = provider.get()[key]
+        override val keys: MutableSet<String> get() = provider.get().keys.toMutableSet()
+        override val values: MutableCollection<String> get() = provider.get().values.toMutableList()
+        override val entries: MutableSet<MutableMap.MutableEntry<String, String>>
+            get() = provider.get().entries
+                .mapTo(linkedSetOf()) { java.util.AbstractMap.SimpleEntry(it.key, it.value) }
+
+        override fun clear(): Nothing = unsupportedMutation()
+        override fun put(key: String, value: String): Nothing = unsupportedMutation()
+        override fun putAll(from: Map<out String, String>): Nothing = unsupportedMutation()
+        override fun remove(key: String): Nothing = unsupportedMutation()
+    }
+
+    private fun unsupportedMutation(): Nothing = throw UnsupportedOperationException("This map is read-only.")
 }
