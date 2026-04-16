@@ -5,5 +5,8 @@ object JvmConfiguration {
     /** Additional JVM arguments for production/main tasks. */
     val mainArgs: List<String> = listOf()
     /** Additional JVM arguments for test tasks. */
-    val testArgs: List<String> = listOf()
+    val testArgs: List<String> = listOf(
+        "--enable-native-access=ALL-UNNAMED",
+        "--sun-misc-unsafe-memory-access=allow",
+    )
 }
