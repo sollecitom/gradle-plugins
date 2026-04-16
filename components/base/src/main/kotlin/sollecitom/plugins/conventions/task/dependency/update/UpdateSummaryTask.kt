@@ -15,7 +15,7 @@ abstract class UpdateSummaryTask @Inject constructor(
 
     init {
         group = "help"
-        description = "Prints a summary of upgrade-related changes in the working tree."
+        description = "Prints a concise summary of upgrade-related changes in the working tree."
     }
 
     @TaskAction
@@ -147,6 +147,7 @@ abstract class UpdateSummaryTask @Inject constructor(
         val file = File(path)
         if (!file.exists()) return emptyList()
 
+        // Preserve emission order so workspace summaries stay stable across runs.
         return file.readLines()
             .map(String::trim)
             .filter(String::isNotEmpty)
