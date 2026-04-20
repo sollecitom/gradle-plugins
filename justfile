@@ -12,7 +12,10 @@ pull:
     git pull
 
 build:
-    ./scripts/publish-if-changed.sh
+    ./gradlew build
+
+cleanup:
+    bash ../scripts/cleanup-maven-local.sh --repo-root . --keep 5 --max-age-days 30
 
 update-internal-dependencies:
     @:
@@ -34,3 +37,6 @@ update-dependencies:
 
 update-all:
     just update-internal-dependencies && just update-dependencies && just update-gradle
+
+workflow +steps:
+    bash ../scripts/run-just-workflow.sh {{steps}}
