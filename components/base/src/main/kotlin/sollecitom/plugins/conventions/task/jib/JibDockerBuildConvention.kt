@@ -20,9 +20,9 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.nativeplatform.platform.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.ArchitectureInternal
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import java.time.Instant
 import java.util.AbstractList
 import java.util.AbstractMap
-import java.time.Instant
 
 /** Convention plugin that configures Jib for building Docker images. Automatically detects the host platform (including Apple Silicon) and configures the target architecture accordingly. */
 abstract class JibDockerBuildConvention : Plugin<Project> {
@@ -72,6 +72,9 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
             }
         }
 
+        // Keep the Jib extension wiring declarative and avoid afterEvaluate here. Jib still
+        // exposes some container settings as plain List/Map setters, so we bridge those through
+        // read-only lazy adapters instead of forcing consuming builds into late mutation.
         extensions.configure<JibExtension> {
             container {
                 setArgs(lazyList(settings.args.orElse(Extension.defaultArgs)))
@@ -103,7 +106,6 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
     private val currentArchitecture: ArchitectureInternal get() = DefaultNativePlatform.getCurrentArchitecture()
 
     private val Extension.reproducibleBuildValue: Boolean get() = reproducibleBuild.getOrElse(Extension.Companion.defaultReproducibleBuild)
-    private val Extension.tagsValue: List<String> get() = tags.getOrElse(Extension.Companion.defaultTags)
 
     /**
      * Extension for configuring Jib Docker image builds.
@@ -208,7 +210,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         override val values: MutableCollection<String> get() = provider.get().values.toMutableList()
         override val entries: MutableSet<MutableMap.MutableEntry<String, String>>
             get() = provider.get().entries
-                .mapTo(linkedSetOf()) { java.util.AbstractMap.SimpleEntry(it.key, it.value) }
+                .mapTo(linkedSetOf()) { AbstractMap.SimpleEntry(it.key, it.value) }
 
         override fun clear(): Nothing = unsupportedMutation()
         override fun put(key: String, value: String): Nothing = unsupportedMutation()
