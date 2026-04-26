@@ -80,6 +80,10 @@ abstract class UpdateSummaryTask @Inject constructor(
                 path == "gradle.properties" && key == "dockerRuntimeBaseImageParam" ->
                     summarizeImageChange("Java runtime image", previousValue, currentValue)
                 path == "gradle.properties" && key in suppressedGradleProperties -> null
+                path == "container-versions.properties" ->
+                    "Container image $key: ${display(previousValue)} → ${display(currentValue)}"
+                path == "gradle/libs.versions.toml" ->
+                    "Dependency $key: ${display(previousValue)} → ${display(currentValue)}"
                 else -> "$key: ${display(previousValue)} → ${display(currentValue)}"
             }
         }
