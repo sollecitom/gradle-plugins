@@ -14,6 +14,12 @@ pull:
 build:
     ./gradlew build
 
+license-audit:
+    bash ../scripts/run-license-audit.sh gradle-plugins
+
+generate-sbom:
+    bash ../scripts/run-generate-sbom.sh gradle-plugins
+
 cleanup:
     bash ../scripts/cleanup-maven-local.sh --repo-root . --keep 5 --max-age-days 30
 
