@@ -17,6 +17,9 @@ build:
 license-audit:
     bash ../scripts/run-license-audit.sh gradle-plugins
 
+license-audit-compact:
+    bash ../scripts/run-license-audit.sh gradle-plugins --compact
+
 generate-sbom:
     bash ../scripts/run-generate-sbom.sh gradle-plugins
 
