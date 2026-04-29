@@ -9,6 +9,11 @@ object RepositoryConfiguration {
 
     private const val internalGroup = "${ProjectSettings.rootGroupId}.*"
 
+    private data class GithubCredentials(
+        val username: String,
+        val token: String,
+    )
+
     /** Repositories for resolving buildscript dependencies (plugins, classpath). */
     object BuildScript {
 
@@ -22,16 +27,33 @@ object RepositoryConfiguration {
     object GithubPackages {
 
         fun apply(config: RepositoryHandler, project: Project) {
+            val credentials = resolveCredentials(project) ?: run {
+                project.logger.info("Skipping GitHub Packages repository because no credentials are configured.")
+                return
+            }
 
             config.maven {
                 url = URI.create("https://maven.pkg.github.com/acme/*") // TODO fix to be GitLab, etc.
                 credentials {
-                    username = project.findProperty("acme.github.user") as String? ?: System.getenv("GITHUB_USERNAME")
-                    password = project.findProperty("acme.github.token") as String? ?: System.getenv("GITHUB_TOKEN")
+                    username = credentials.username
+                    password = credentials.token
                 }
                 content {
                     includeGroupByRegex(internalGroup)
                 }
+            }
+        }
+
+        private fun resolveCredentials(project: Project): GithubCredentials? {
+            val username = (project.findProperty("acme.github.user") as String? ?: System.getenv("GITHUB_USERNAME"))
+                ?.takeIf { it.isNotBlank() }
+            val token = (project.findProperty("acme.github.token") as String? ?: System.getenv("GITHUB_TOKEN"))
+                ?.takeIf { it.isNotBlank() }
+
+            return if (username != null && token != null) {
+                GithubCredentials(username = username, token = token)
+            } else {
+                null
             }
         }
     }
