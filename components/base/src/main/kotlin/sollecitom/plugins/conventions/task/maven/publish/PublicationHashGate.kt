@@ -64,14 +64,18 @@ internal object PublicationHashGate {
             }
         }
 
-        val targetVersion = if (changedArtifacts.isEmpty()) {
-            latestPublishedVersion
-        } else {
-            nextPatchVersion(latestPublishedVersion, currentVersion)
+        val publishCurrentVersion = changedArtifacts.isEmpty() &&
+            isStableSemver(currentVersion) &&
+            Semver(currentVersion, Semver.SemverType.STRICT) > Semver(latestPublishedVersion, Semver.SemverType.STRICT)
+
+        val targetVersion = when {
+            publishCurrentVersion -> currentVersion
+            changedArtifacts.isEmpty() -> latestPublishedVersion
+            else -> nextPatchVersion(latestPublishedVersion, currentVersion)
         }
 
         return PublicationState(
-            status = if (changedArtifacts.isEmpty()) PublicationState.Status.UNCHANGED else PublicationState.Status.PUBLISH_REQUIRED,
+            status = if (changedArtifacts.isEmpty() && !publishCurrentVersion) PublicationState.Status.UNCHANGED else PublicationState.Status.PUBLISH_REQUIRED,
             currentVersion = currentVersion,
             latestPublishedVersion = latestPublishedVersion,
             targetVersion = targetVersion,
