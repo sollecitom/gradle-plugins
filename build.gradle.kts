@@ -76,10 +76,22 @@ subprojects {
 
 tasks.register<UpdateSummaryTask>("updateSummary")
 tasks.register<WritePublicationStateTask>("writePublicationState") {
-    dependsOn(publishableProjects().map { "${it.path}:build" })
+    dependsOn(
+        publishableProjects().flatMap { candidate ->
+            listOf(
+                "${candidate.path}:jar",
+                "${candidate.path}:sourcesJar",
+                "${candidate.path}:javadocJar",
+            )
+        }
+    )
     currentVersion.set(project.version.toString())
     artifactCoordinates.set(publishableArtifacts().map { it.coordinate })
     artifactPaths.set(publishableArtifacts().map { it.buildFile.absolutePath })
+    val trackedState = layout.projectDirectory.file("publication-state.properties")
+    if (trackedState.asFile.exists()) {
+        trackedStateFile.set(trackedState)
+    }
     outputFile.set(layout.buildDirectory.file("publication-state/publication-state.properties"))
 }
 

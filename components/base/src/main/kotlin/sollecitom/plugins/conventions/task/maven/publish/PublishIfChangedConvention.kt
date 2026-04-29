@@ -35,10 +35,24 @@ abstract class PublishIfChangedConvention : Plugin<Project> {
                     }
                 }
 
-            dependsOn(project.rootProject.subprojects.filter { candidate -> candidate.pluginManager.hasPlugin("maven-publish") }.map { "${it.path}:build" })
+            dependsOn(
+                project.rootProject.subprojects
+                    .filter { candidate -> candidate.pluginManager.hasPlugin("maven-publish") }
+                    .flatMap { candidate ->
+                        listOf(
+                            "${candidate.path}:jar",
+                            "${candidate.path}:sourcesJar",
+                            "${candidate.path}:javadocJar",
+                        )
+                    }
+            )
             currentVersion.set(project.version.toString())
             artifactCoordinates.set(artifacts.map { it.coordinate })
             artifactPaths.set(artifacts.map { it.buildFile.absolutePath })
+            val trackedState = layout.projectDirectory.file("publication-state.properties")
+            if (trackedState.asFile.exists()) {
+                trackedStateFile.set(trackedState)
+            }
             outputFile.set(layout.buildDirectory.file("publication-state/publication-state.properties"))
         }
         Unit

@@ -10,6 +10,17 @@ internal data class PublishedArtifact(
 ) {
     private val coordinates = coordinate.substringBefore('@').split(':')
     private val extension = coordinate.substringAfter('@')
+    val identityKey: String = buildString {
+        append(coordinates[0])
+        append(':')
+        append(coordinates[1])
+        coordinates.getOrNull(3)?.let {
+            append(':')
+            append(it)
+        }
+        append('@')
+        append(extension)
+    }
 
     fun publishedFile(versionOverride: String, mavenLocalRepository: File): File {
         val group = coordinates[0]
@@ -27,9 +38,11 @@ internal data class PublicationState(
     val latestPublishedVersion: String?,
     val targetVersion: String,
     val changedArtifacts: List<String>,
+    val trackedState: TrackedPublicationState,
 ) {
     enum class Status {
         UNCHANGED,
+        LOCAL_PUBLISH_REQUIRED,
         PUBLISH_REQUIRED,
     }
 }
@@ -39,10 +52,68 @@ internal object PublicationHashGate {
     fun inspect(
         currentVersion: String,
         artifacts: List<PublishedArtifact>,
+        trackedStateFile: File? = null,
         mavenLocalRepository: File = File(System.getProperty("user.home"), ".m2/repository"),
     ): PublicationState {
 
         require(artifacts.isNotEmpty()) { "No publishable artifacts were found." }
+
+        val currentArtifactHashes = artifacts.associate { artifact ->
+            artifact.identityKey to sha256(artifact.buildFile)
+        }.toSortedMap()
+        val trackedState = TrackedPublicationState.load(trackedStateFile)
+
+        if (trackedState != null) {
+            val changedArtifacts = currentArtifactHashes.keys
+                .union(trackedState.artifactHashes.keys)
+                .sorted()
+                .mapNotNull { identity ->
+                    if (currentArtifactHashes[identity] != trackedState.artifactHashes[identity]) identity else null
+                }
+
+            val targetVersion = if (changedArtifacts.isEmpty()) trackedState.publishedVersion else nextPatchVersion(trackedState.publishedVersion, currentVersion)
+            val status = when {
+                changedArtifacts.isNotEmpty() -> PublicationState.Status.PUBLISH_REQUIRED
+                !artifactsAvailableLocally(artifacts, targetVersion, mavenLocalRepository) -> PublicationState.Status.LOCAL_PUBLISH_REQUIRED
+                else -> PublicationState.Status.UNCHANGED
+            }
+
+            return PublicationState(
+                status = status,
+                currentVersion = currentVersion,
+                latestPublishedVersion = trackedState.publishedVersion,
+                targetVersion = targetVersion,
+                changedArtifacts = changedArtifacts,
+                trackedState = TrackedPublicationState(
+                    publishedVersion = targetVersion,
+                    artifactHashes = currentArtifactHashes,
+                ),
+            )
+        }
+
+        val normalizedCurrentVersion = normalizeInitialVersion(currentVersion)
+        val currentVersionArtifactsChanged = artifacts.mapNotNull { artifact ->
+            val publishedFile = artifact.publishedFile(normalizedCurrentVersion, mavenLocalRepository)
+            when {
+                !publishedFile.exists() -> artifact.identityKey
+                sha256(artifact.buildFile) != sha256(publishedFile) -> artifact.identityKey
+                else -> null
+            }
+        }
+
+        if (currentVersionArtifactsChanged.isEmpty()) {
+            return PublicationState(
+                status = PublicationState.Status.UNCHANGED,
+                currentVersion = currentVersion,
+                latestPublishedVersion = normalizedCurrentVersion,
+                targetVersion = normalizedCurrentVersion,
+                changedArtifacts = emptyList(),
+                trackedState = TrackedPublicationState(
+                    publishedVersion = normalizedCurrentVersion,
+                    artifactHashes = currentArtifactHashes,
+                ),
+            )
+        }
 
         val latestPublishedVersion = latestCommonPublishedVersion(artifacts, mavenLocalRepository)
         if (latestPublishedVersion == null) {
@@ -50,37 +121,44 @@ internal object PublicationHashGate {
                 status = PublicationState.Status.PUBLISH_REQUIRED,
                 currentVersion = currentVersion,
                 latestPublishedVersion = null,
-                targetVersion = normalizeInitialVersion(currentVersion),
-                changedArtifacts = artifacts.map(PublishedArtifact::coordinate),
+                targetVersion = normalizedCurrentVersion,
+                changedArtifacts = artifacts.map(PublishedArtifact::identityKey),
+                trackedState = TrackedPublicationState(
+                    publishedVersion = normalizedCurrentVersion,
+                    artifactHashes = currentArtifactHashes,
+                ),
             )
         }
 
         val changedArtifacts = artifacts.mapNotNull { artifact ->
             val publishedFile = artifact.publishedFile(latestPublishedVersion, mavenLocalRepository)
             when {
-                !publishedFile.exists() -> artifact.coordinate
-                sha256(artifact.buildFile) != sha256(publishedFile) -> artifact.coordinate
+                !publishedFile.exists() -> artifact.identityKey
+                sha256(artifact.buildFile) != sha256(publishedFile) -> artifact.identityKey
                 else -> null
             }
         }
-
-        val publishCurrentVersion = changedArtifacts.isEmpty() &&
-            isStableSemver(currentVersion) &&
-            Semver(currentVersion, Semver.SemverType.STRICT) > Semver(latestPublishedVersion, Semver.SemverType.STRICT)
-
-        val targetVersion = when {
-            publishCurrentVersion -> currentVersion
-            changedArtifacts.isEmpty() -> latestPublishedVersion
-            else -> nextPatchVersion(latestPublishedVersion, currentVersion)
-        }
+        val targetVersion = if (changedArtifacts.isEmpty()) latestPublishedVersion else nextPatchVersion(latestPublishedVersion, currentVersion)
 
         return PublicationState(
-            status = if (changedArtifacts.isEmpty() && !publishCurrentVersion) PublicationState.Status.UNCHANGED else PublicationState.Status.PUBLISH_REQUIRED,
+            status = if (changedArtifacts.isEmpty()) PublicationState.Status.UNCHANGED else PublicationState.Status.PUBLISH_REQUIRED,
             currentVersion = currentVersion,
             latestPublishedVersion = latestPublishedVersion,
             targetVersion = targetVersion,
             changedArtifacts = changedArtifacts,
+            trackedState = TrackedPublicationState(
+                publishedVersion = targetVersion,
+                artifactHashes = currentArtifactHashes,
+            ),
         )
+    }
+
+    private fun artifactsAvailableLocally(
+        artifacts: List<PublishedArtifact>,
+        version: String,
+        mavenLocalRepository: File,
+    ): Boolean = artifacts.all { artifact ->
+        artifact.publishedFile(version, mavenLocalRepository).exists()
     }
 
     private fun latestCommonPublishedVersion(
@@ -132,5 +210,35 @@ internal object PublicationHashGate {
             }
         }
         return digest.digest().joinToString(separator = "") { byte -> "%02x".format(byte) }
+    }
+}
+
+internal data class TrackedPublicationState(
+    val publishedVersion: String,
+    val artifactHashes: Map<String, String>,
+) {
+    companion object {
+        fun load(file: File?): TrackedPublicationState? {
+            if (file == null || !file.exists()) return null
+
+            val properties = java.util.Properties().apply {
+                file.inputStream().use(::load)
+            }
+            val publishedVersion = properties.getProperty("publishedVersion")?.takeIf { it.isNotBlank() } ?: return null
+            val artifactCount = properties.getProperty("artifactCount")?.toIntOrNull() ?: 0
+            val artifactHashes = buildMap {
+                for (index in 1..artifactCount) {
+                    val prefix = "artifact.$index"
+                    val identity = properties.getProperty("$prefix.identity")?.takeIf { it.isNotBlank() } ?: continue
+                    val hash = properties.getProperty("$prefix.sha256")?.takeIf { it.isNotBlank() } ?: continue
+                    put(identity, hash)
+                }
+            }.toSortedMap()
+
+            return TrackedPublicationState(
+                publishedVersion = publishedVersion,
+                artifactHashes = artifactHashes,
+            )
+        }
     }
 }

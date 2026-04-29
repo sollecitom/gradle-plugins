@@ -5,7 +5,9 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 import java.io.File
@@ -31,6 +33,10 @@ abstract class WritePublicationStateTask : DefaultTask() {
     @get:Input
     abstract val currentVersion: Property<String>
 
+    @get:Optional
+    @get:InputFile
+    abstract val trackedStateFile: RegularFileProperty
+
     @TaskAction
     fun writeState() {
         val artifacts = artifactCoordinates.get().zip(artifactPaths.get()).map { (coordinate, path) ->
@@ -43,6 +49,7 @@ abstract class WritePublicationStateTask : DefaultTask() {
         val state = PublicationHashGate.inspect(
             currentVersion = currentVersion.get(),
             artifacts = artifacts,
+            trackedStateFile = trackedStateFile.asFile.orNull,
         )
 
         val output = outputFile.get().asFile
@@ -54,6 +61,13 @@ abstract class WritePublicationStateTask : DefaultTask() {
             state.latestPublishedVersion?.let { setProperty("latestPublishedVersion", it) }
             setProperty("targetVersion", state.targetVersion)
             setProperty("changedArtifacts", state.changedArtifacts.joinToString(","))
+            setProperty("trackedPublishedVersion", state.trackedState.publishedVersion)
+            setProperty("trackedArtifactCount", state.trackedState.artifactHashes.size.toString())
+            state.trackedState.artifactHashes.entries.sortedBy { it.key }.forEachIndexed { index, entry ->
+                val prefix = "trackedArtifact.${index + 1}"
+                setProperty("$prefix.identity", entry.key)
+                setProperty("$prefix.sha256", entry.value)
+            }
         }.also { properties ->
             output.outputStream().use { stream -> properties.store(stream, null) }
         }
