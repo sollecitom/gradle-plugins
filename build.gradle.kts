@@ -119,22 +119,23 @@ abstract class UpdateSummaryTask @Inject constructor(
 
         changedFiles.forEach { file ->
             when {
+                file in suppressedSummaryFiles -> Unit
                 file in keyValueFiles -> {
                     val lines = summarizeKeyValueFile(file)
-                    if (lines.isNotEmpty()) summaryLines += lines else summaryLines += "changed: $file"
+                    if (lines.isNotEmpty()) summaryLines += lines
                 }
                 file == "Dockerfile" || file.endsWith("/Dockerfile") -> {
-                    summaryLines += summarizeDockerfile(file) ?: "changed: $file"
+                    summarizeDockerfile(file)?.let(summaryLines::add)
                 }
                 file.endsWith("/Plugins.kt") -> {
                     summaryLines += summarizeRegexChange(file, Regex("""VERSION_(\d+)"""), "Java toolchain")
-                        ?: "changed: $file"
+                        ?: return@forEach
                 }
                 file.endsWith("/KotlinTaskConventions.kt") -> {
                     summaryLines += summarizeRegexChange(file, Regex("""JVM_(\d+)"""), "Kotlin JVM target")
-                        ?: "changed: $file"
+                        ?: return@forEach
                 }
-                else -> summaryLines += "changed: $file"
+                else -> Unit
             }
         }
 
@@ -156,9 +157,7 @@ abstract class UpdateSummaryTask @Inject constructor(
             if (previousValue == currentValue) return@mapNotNull null
 
             when {
-                path == "gradle/wrapper/gradle-wrapper.properties" && key == "distributionSha256Sum" -> null
-                path == "gradle/wrapper/gradle-wrapper.properties" && key == "distributionUrl" ->
-                    "Gradle: ${extractGradleVersion(previousValue)} → ${extractGradleVersion(currentValue)}"
+                path == "gradle/wrapper/gradle-wrapper.properties" -> null
                 path == "gradle.properties" && key == "dockerBaseImageParam" ->
                     "Java image: ${display(previousValue)} → ${display(currentValue)}"
                 else -> "$key: ${display(previousValue)} → ${display(currentValue)}"
@@ -243,6 +242,11 @@ abstract class UpdateSummaryTask @Inject constructor(
             "container-versions.properties",
             "gradle.properties",
             "gradle/wrapper/gradle-wrapper.properties",
+        )
+        val suppressedSummaryFiles = setOf(
+            "gradle/wrapper/gradle-wrapper.jar",
+            "gradlew",
+            "gradlew.bat",
         )
     }
 }
