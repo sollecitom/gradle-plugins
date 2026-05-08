@@ -61,26 +61,15 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
     }
 
     companion object {
-        // Netty 4.1.133.Final fixes CVE-2026-42577/42578/42579/42580/42581/42582/42583/42584/42585/42586/42587/41417/44248
-        // (epoll DoS via RST, handler-proxy auth, codec-dns input validation, codec-http desync/decompression bombs,
-        //  codec-redis, codec-mqtt, codec-http3, codec compression resource exhaustion). Pin all impacted modules
-        //  uniformly so transitive callers (Pulsar, gRPC, http4k, Jetty) cannot drag in older vulnerable versions.
-        private const val NETTY_MIN_VERSION = "4.1.133.Final"
-        private val nettyModules = listOf(
-            "netty-handler",
-            "netty-handler-proxy",
-            "netty-codec",
-            "netty-codec-http",
-            "netty-codec-http2",
-            "netty-codec-http3",
-            "netty-codec-dns",
-            "netty-codec-mqtt",
-            "netty-codec-redis",
-            "netty-transport-native-epoll",
-        )
+        // Netty 4.2.13.Final fixes the full CVE-2026-* family (epoll DoS via RST on half-closed TCP — only fixed
+        // in the 4.2.x line; 4.1.133 was the last 4.1.x release and lacks this fix), plus the handler-proxy auth,
+        // codec-dns input validation, codec-http desync/decompression bombs, codec-redis, codec-mqtt, codec-http3,
+        // codec compression resource exhaustion fixes. Pinning the whole `io.netty:*` group prevents 4.1↔4.2 module
+        // mixing (where, e.g., a 4.1.x resolver-dns would call into a 4.2.x codec-dns and break at runtime).
         private val defaultVulnerableDependencies: List<MinimumDependencyVersion> = listOf(
             // CVE fix: versions before 1.26.0 have known vulnerabilities
             MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0"),
-        ) + nettyModules.map { module -> MinimumDependencyVersion(group = "io.netty", name = module, minimumVersion = NETTY_MIN_VERSION) }
+            MinimumDependencyVersion(group = "io.netty", name = "*", minimumVersion = "4.2.13.Final"),
+        )
     }
 }
