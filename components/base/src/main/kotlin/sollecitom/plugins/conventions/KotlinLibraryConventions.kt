@@ -61,13 +61,26 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
     }
 
     companion object {
-        private val defaultVulnerableDependencies = listOf(
+        // Netty 4.1.133.Final fixes CVE-2026-42577/42578/42579/42580/42581/42582/42583/42584/42585/42586/42587/41417/44248
+        // (epoll DoS via RST, handler-proxy auth, codec-dns input validation, codec-http desync/decompression bombs,
+        //  codec-redis, codec-mqtt, codec-http3, codec compression resource exhaustion). Pin all impacted modules
+        //  uniformly so transitive callers (Pulsar, gRPC, http4k, Jetty) cannot drag in older vulnerable versions.
+        private const val NETTY_MIN_VERSION = "4.1.133.Final"
+        private val nettyModules = listOf(
+            "netty-handler",
+            "netty-handler-proxy",
+            "netty-codec",
+            "netty-codec-http",
+            "netty-codec-http2",
+            "netty-codec-http3",
+            "netty-codec-dns",
+            "netty-codec-mqtt",
+            "netty-codec-redis",
+            "netty-transport-native-epoll",
+        )
+        private val defaultVulnerableDependencies: List<MinimumDependencyVersion> = listOf(
             // CVE fix: versions before 1.26.0 have known vulnerabilities
             MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0"),
-            // CVE-2025-24970: SslHandler doesn't correctly validate packets, can lead to native crash when using native SSLEngine
-            MinimumDependencyVersion(group = "io.netty", name = "netty-handler", minimumVersion = "4.1.132.Final"),
-            // CVE-2026-33870: netty-codec-http vulnerability
-            MinimumDependencyVersion(group = "io.netty", name = "netty-codec-http", minimumVersion = "4.1.132.Final")
-        )
+        ) + nettyModules.map { module -> MinimumDependencyVersion(group = "io.netty", name = module, minimumVersion = NETTY_MIN_VERSION) }
     }
 }
