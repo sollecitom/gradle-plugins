@@ -45,6 +45,9 @@ abstract class SecurityScanConvention : Plugin<Project> {
             description = "Scans Docker images for security vulnerabilities using Trivy."
             group = "verification"
             useJUnitPlatform()
+            // Accepted-but-still-present CVEs (from .trivyignore) are reported as a non-failing warning on stdout;
+            // surface it so suppressed vulnerabilities stay visible in the build output.
+            testLogging.showStandardStreams = true
 
             testClassesDirs = sourceSet.output.classesDirs
             classpath = configurations[sourceSet.runtimeClasspathConfigurationName] + sourceSet.output
@@ -59,7 +62,10 @@ abstract class SecurityScanConvention : Plugin<Project> {
                 severities.set(extension.severities)
                 trivyVersion.set(extension.trivyVersion)
                 trivyIgnoreFile.set(project.providers.provider {
-                    extension.trivyIgnoreFile.orNull?.let(project.layout.projectDirectory::file)
+                    val explicit = extension.trivyIgnoreFile.orNull?.let(project.layout.projectDirectory::file)
+                    // Default to a `.trivyignore` at the repo root when present, so accepted CVEs are picked up with no per-repo config.
+                    val default = project.rootProject.layout.projectDirectory.file(".trivyignore").takeIf { it.asFile.exists() }
+                    explicit ?: default
                 })
             }
         }

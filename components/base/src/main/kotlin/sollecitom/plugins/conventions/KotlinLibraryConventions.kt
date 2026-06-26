@@ -61,15 +61,18 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
     }
 
     companion object {
-        // Netty 4.2.13.Final fixes the full CVE-2026-* family (epoll DoS via RST on half-closed TCP — only fixed
-        // in the 4.2.x line; 4.1.133 was the last 4.1.x release and lacks this fix), plus the handler-proxy auth,
-        // codec-dns input validation, codec-http desync/decompression bombs, codec-redis, codec-mqtt, codec-http3,
-        // codec compression resource exhaustion fixes. Pinning the whole `io.netty:*` group prevents 4.1↔4.2 module
-        // mixing (where, e.g., a 4.1.x resolver-dns would call into a 4.2.x codec-dns and break at runtime).
+        // Netty 4.2.15.Final fixes the full CVE-2026-* family. 4.2.13.Final still carries: netty-handler
+        // CVE-2026-44249 (IPv6 subnet rule bypass via incorrect masking), CVE-2026-45416 (TLS-handshake DoS via
+        // eager buffer allocation), CVE-2026-50010 (hostname-verification bypass via improper trust-manager handling);
+        // netty-resolver-dns CVE-2026-45674 (improper CNAME validation → info disclosure/data manipulation) and
+        // CVE-2026-47691 (insufficient bailiwick validation for NS records). 4.2.15.Final closes all five, on top of
+        // the earlier epoll-DoS, handler-proxy auth, codec-dns/http/redis/mqtt/http3 and compression-bomb fixes.
+        // Pinning the whole `io.netty:*` group prevents 4.1↔4.2 module mixing (where, e.g., a 4.1.x resolver-dns
+        // would call into a 4.2.x codec-dns and break at runtime).
         private val defaultVulnerableDependencies: List<MinimumDependencyVersion> = listOf(
             // CVE fix: versions before 1.26.0 have known vulnerabilities
             MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0"),
-            MinimumDependencyVersion(group = "io.netty", name = "*", minimumVersion = "4.2.13.Final"),
+            MinimumDependencyVersion(group = "io.netty", name = "*", minimumVersion = "4.2.15.Final"),
         )
     }
 }
