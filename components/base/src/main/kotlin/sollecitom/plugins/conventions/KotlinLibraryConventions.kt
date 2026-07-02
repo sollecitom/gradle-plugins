@@ -73,6 +73,10 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
             // CVE fix: versions before 1.26.0 have known vulnerabilities
             MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0"),
             MinimumDependencyVersion(group = "io.netty", name = "*", minimumVersion = "4.2.15.Final"),
+            // CVE-2026-53712: scram 3.2 silently downgrades SCRAM channel-binding auth on unsupported certificate
+            // algorithms; fixed in 3.3. Pulled in transitively via the PostgreSQL driver. Pinning the whole
+            // `com.ongres.scram:*` group keeps scram-client/scram-common in lockstep at a fixed version.
+            MinimumDependencyVersion(group = "com.ongres.scram", name = "*", minimumVersion = "3.3"),
         )
     }
 }
