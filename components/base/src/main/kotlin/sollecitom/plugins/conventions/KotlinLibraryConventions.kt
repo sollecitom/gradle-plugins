@@ -77,6 +77,11 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
             // algorithms; fixed in 3.3. Pulled in transitively via the PostgreSQL driver. Pinning the whole
             // `com.ongres.scram:*` group keeps scram-client/scram-common in lockstep at a fixed version.
             MinimumDependencyVersion(group = "com.ongres.scram", name = "*", minimumVersion = "3.3"),
+            // GHSA-r7wm-3cxj-wff9: jackson-core < 2.22.1 lets the async parser bypass maxNumberLength via chunked
+            // digit accumulation (incomplete fix for GHSA-72hv-8253-57qq); fixed in 2.22.1. Pin jackson-core BY NAME,
+            // not the `com.fasterxml.jackson.core:*` group — jackson-annotations shares that group but has no 2.22.1
+            // release, so a group-wide pin would force a non-existent version and break resolution.
+            MinimumDependencyVersion(group = "com.fasterxml.jackson.core", name = "jackson-core", minimumVersion = "2.22.1"),
         )
     }
 }
