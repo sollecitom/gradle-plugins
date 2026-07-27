@@ -18,12 +18,14 @@ abstract class KotlinTaskConventions : Plugin<Project> {
                 javaParameters.set(true)
                 freeCompilerArgs.set(compilerArgs)
                 progressiveMode.set(true)
+                optIn.addAll(optIns)
             }
         }
     }
 
     companion object {
         private val compilerArgs = listOf("-Xcontext-parameters", "-Xjsr305=strict")
+        private val optIns = listOf("kotlin.uuid.ExperimentalUuidApi")
         private val targetJvmVersion = JvmTarget.JVM_25
     }
 }

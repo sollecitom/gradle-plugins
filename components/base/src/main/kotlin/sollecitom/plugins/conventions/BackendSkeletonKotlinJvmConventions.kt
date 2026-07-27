@@ -46,6 +46,7 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
                     "-Xjsr305=strict",
                     "-Xcontext-parameters",
                 )
+                optIn.add("kotlin.uuid.ExperimentalUuidApi")
             }
         }
 
