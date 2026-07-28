@@ -49,6 +49,7 @@ abstract class PublishIfChangedConvention : Plugin<Project> {
             currentVersion.set(project.version.toString())
             artifactCoordinates.set(artifacts.map { it.coordinate })
             artifactPaths.set(artifacts.map { it.buildFile.absolutePath })
+            artifactFiles.setFrom(artifacts.map { it.buildFile })
             val trackedState = layout.projectDirectory.file("publication-state.properties")
             if (trackedState.asFile.exists()) {
                 trackedStateFile.set(trackedState)

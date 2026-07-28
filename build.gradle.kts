@@ -88,6 +88,7 @@ tasks.register<WritePublicationStateTask>("writePublicationState") {
     currentVersion.set(project.version.toString())
     artifactCoordinates.set(publishableArtifacts().map { it.coordinate })
     artifactPaths.set(publishableArtifacts().map { it.buildFile.absolutePath })
+    artifactFiles.setFrom(publishableArtifacts().map { it.buildFile })
     val trackedState = layout.projectDirectory.file("publication-state.properties")
     if (trackedState.asFile.exists()) {
         trackedStateFile.set(trackedState)

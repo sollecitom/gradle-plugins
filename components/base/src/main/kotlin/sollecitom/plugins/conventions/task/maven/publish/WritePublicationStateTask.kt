@@ -1,11 +1,13 @@
 package sollecitom.plugins.conventions.task.maven.publish
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
@@ -31,6 +33,11 @@ abstract class WritePublicationStateTask : DefaultTask() {
 
     @get:Input
     abstract val artifactPaths: ListProperty<String>
+
+    /** The built artifact files, tracked by content so the task re-runs whenever any jar changes (paths alone miss content changes). */
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val artifactFiles: ConfigurableFileCollection
 
     @get:Input
     abstract val currentVersion: Property<String>
