@@ -4,7 +4,7 @@ A set of Gradle plugins for other projects to use.
 
 ## Requirements
 
-1. Java 23 (neither below nor above).
+1. Java 25 (neither below nor above).
 
 ## How to
 
