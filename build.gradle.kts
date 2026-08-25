@@ -5,6 +5,7 @@ import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.kotlin.dsl.register
 import org.gradle.process.ExecOperations
 import org.gradle.work.DisableCachingByDefault
+import sollecitom.buildsrc.publish.capitalizedPublicationName
 import sollecitom.buildsrc.publish.publishableArtifacts
 import sollecitom.buildsrc.publish.publishableProjects
 import sollecitom.buildsrc.publish.WritePublicationStateTask
@@ -82,6 +83,8 @@ tasks.register<WritePublicationStateTask>("writePublicationState") {
                 "${candidate.path}:jar",
                 "${candidate.path}:sourcesJar",
                 "${candidate.path}:javadocJar",
+                "${candidate.path}:generatePomFileFor${candidate.capitalizedPublicationName}Publication",
+                "${candidate.path}:generateMetadataFileFor${candidate.capitalizedPublicationName}Publication",
             )
         }
     )

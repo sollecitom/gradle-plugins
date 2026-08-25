@@ -95,7 +95,9 @@ fun Project.publishableArtifacts(): List<PublishedArtifact> =
     publishableProjects().flatMap { candidate ->
         val version = candidate.version.toString()
         val libsDir = candidate.layout.buildDirectory.dir("libs").get().asFile
-        listOf(null, "sources", "javadoc").map { classifier ->
+        val publicationDirectory = candidate.layout.buildDirectory.dir("publications/${candidate.publicationName}").get().asFile
+
+        val jars = listOf(null, "sources", "javadoc").map { classifier ->
             val classifierSuffix = classifier?.let { "-$it" }.orEmpty()
             PublishedArtifact(
                 coordinate = buildString {
@@ -113,7 +115,28 @@ fun Project.publishableArtifacts(): List<PublishedArtifact> =
                 buildFile = libsDir.resolve("${candidate.name}-$version$classifierSuffix.jar"),
             )
         }
+
+        // The POM and the Gradle module metadata are where dependency versions live. A dependency-only upgrade
+        // leaves the bytecode untouched, so tracking jars alone reports "unchanged" and the upgrade is never
+        // republished. Both files are reproducible, so this does not cause spurious republishing.
+        val metadata = listOf(
+            "pom" to publicationDirectory.resolve("pom-default.xml"),
+            "module" to publicationDirectory.resolve("module.json"),
+        ).map { (extension, file) ->
+            PublishedArtifact(
+                coordinate = "${candidate.group}:${candidate.name}:$version@$extension",
+                buildFile = file,
+            )
+        }
+
+        jars + metadata
     }
+
+/** Mirrors the publication created in the root build script, which owns the naming. */
+val Project.publicationName: String get() = "$name-maven"
+
+/** The form Gradle uses when it derives `generatePomFileFor<Publication>Publication` task names. */
+val Project.capitalizedPublicationName: String get() = publicationName.replaceFirstChar { it.uppercase() }
 
 data class PublishedArtifact(
     val coordinate: String,
