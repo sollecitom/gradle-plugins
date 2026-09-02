@@ -23,6 +23,10 @@ abstract class WritePublicationStateTask : DefaultTask() {
     init {
         group = "publishing"
         description = "Writes the local publication state derived from built artifacts and Maven Local."
+        // The verdict depends on the contents of Maven Local, which is not a declared input and cannot
+        // practically be one. Without this, Gradle keeps a stale verdict: a repo whose first verdict was
+        // LOCAL_PUBLISH_REQUIRED would republish on every run forever, because the check never re-runs.
+        outputs.upToDateWhen { false }
     }
 
     @get:OutputFile
