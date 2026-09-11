@@ -61,16 +61,17 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
     }
 
     companion object {
-        // Netty 4.2.16.Final is the current CVE-clean 4.2.x release. Superseded pins: 4.2.13.Final carried the
+        // Netty 4.2.18.Final is the current CVE-clean 4.2.x release. Superseded pins: 4.2.13.Final carried the
         // netty-handler/resolver-dns family (CVE-2026-44249/45416/50010/45674/47691); 4.2.15.Final then exposed
         // netty-codec-http CVE-2026-55831/55833/56745 and netty-codec-compression CVE-2026-59901 (Bzip2Decoder
-        // RLE infinite loop → event-loop hang), all fixed in 4.2.16.Final. Pinning the whole `io.netty:*` group
-        // prevents 4.1↔4.2 module mixing (where, e.g., a 4.1.x resolver-dns would call into a 4.2.x codec-dns
-        // and break at runtime).
+        // RLE infinite loop → event-loop hang), all fixed in 4.2.16.Final; 4.2.16.Final in turn carried
+        // netty-handler CVE-2026-75595, fixed in 4.2.17.Final. Pinning the whole `io.netty:*` group prevents
+        // 4.1↔4.2 module mixing (where, e.g., a 4.1.x resolver-dns would call into a 4.2.x codec-dns and break
+        // at runtime).
         private val defaultVulnerableDependencies: List<MinimumDependencyVersion> = listOf(
             // CVE fix: versions before 1.26.0 have known vulnerabilities
             MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0"),
-            MinimumDependencyVersion(group = "io.netty", name = "*", minimumVersion = "4.2.16.Final"),
+            MinimumDependencyVersion(group = "io.netty", name = "*", minimumVersion = "4.2.18.Final"),
             // CVE-2026-53712: scram 3.2 silently downgrades SCRAM channel-binding auth on unsupported certificate
             // algorithms; fixed in 3.3. Pulled in transitively via the PostgreSQL driver. Pinning the whole
             // `com.ongres.scram:*` group keeps scram-client/scram-common in lockstep at a fixed version.
