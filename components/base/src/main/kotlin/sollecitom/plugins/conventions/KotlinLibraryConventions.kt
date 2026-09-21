@@ -81,6 +81,14 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
             // not the `com.fasterxml.jackson.core:*` group — jackson-annotations shares that group but has no 2.22.1
             // release, so a group-wide pin would force a non-existent version and break resolution.
             MinimumDependencyVersion(group = "com.fasterxml.jackson.core", name = "jackson-core", minimumVersion = "2.22.1"),
+            // CVE-2026-8763 (Name Constraints bypass via a trailing dot in rfc822Name/URI) and CVE-2026-13506
+            // (DoS via lazy ASN.1 sequence processing) affect bcprov < 1.85; 1.86 is the current clean release.
+            // Pulled in transitively via the Pulsar client. Pin the three `-jdk18on` artifacts BY NAME, not the
+            // `org.bouncycastle:*` group — the NATS client brings in bcprov-lts8on, which is on an unrelated 2.x
+            // line, so a group-wide pin would force a non-existent version and break resolution.
+            MinimumDependencyVersion(group = "org.bouncycastle", name = "bcprov-jdk18on", minimumVersion = "1.86"),
+            MinimumDependencyVersion(group = "org.bouncycastle", name = "bcpkix-jdk18on", minimumVersion = "1.86"),
+            MinimumDependencyVersion(group = "org.bouncycastle", name = "bcutil-jdk18on", minimumVersion = "1.86"),
         )
     }
 }
