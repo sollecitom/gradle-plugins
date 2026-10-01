@@ -77,10 +77,14 @@ abstract class KotlinLibraryConventions : Plugin<Project> {
             // `com.ongres.scram:*` group keeps scram-client/scram-common in lockstep at a fixed version.
             MinimumDependencyVersion(group = "com.ongres.scram", name = "*", minimumVersion = "3.3"),
             // GHSA-r7wm-3cxj-wff9: jackson-core < 2.22.1 lets the async parser bypass maxNumberLength via chunked
-            // digit accumulation (incomplete fix for GHSA-72hv-8253-57qq); fixed in 2.22.1. Pin jackson-core BY NAME,
-            // not the `com.fasterxml.jackson.core:*` group — jackson-annotations shares that group but has no 2.22.1
-            // release, so a group-wide pin would force a non-existent version and break resolution.
-            MinimumDependencyVersion(group = "com.fasterxml.jackson.core", name = "jackson-core", minimumVersion = "2.22.1"),
+            // digit accumulation (incomplete fix for GHSA-72hv-8253-57qq). CVE-2026-91776 (TypeDeserializerBase
+            // ._findDeserializer) and CVE-2026-91777 (@JsonIdentityInfo forward-reference completion) then hit
+            // jackson-databind <= 2.22.2. Both are fixed in 2.22.3, which core and databind ship in lockstep.
+            // Pin the two BY NAME, not the `com.fasterxml.jackson.core:*` group — jackson-annotations shares that
+            // group but has no 2.22.3 release, so a group-wide pin would force a non-existent version and break
+            // resolution.
+            MinimumDependencyVersion(group = "com.fasterxml.jackson.core", name = "jackson-core", minimumVersion = "2.22.3"),
+            MinimumDependencyVersion(group = "com.fasterxml.jackson.core", name = "jackson-databind", minimumVersion = "2.22.3"),
             // CVE-2026-8763 (Name Constraints bypass via a trailing dot in rfc822Name/URI) and CVE-2026-13506
             // (DoS via lazy ASN.1 sequence processing) affect bcprov < 1.85; 1.86 is the current clean release.
             // Pulled in transitively via the Pulsar client. Pin the three `-jdk18on` artifacts BY NAME, not the
