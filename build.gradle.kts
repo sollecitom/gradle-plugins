@@ -10,6 +10,7 @@ import sollecitom.buildsrc.publish.publishableArtifacts
 import sollecitom.buildsrc.publish.publishableProjects
 import sollecitom.buildsrc.publish.WritePublicationStateTask
 import java.io.ByteArrayOutputStream
+import java.io.File
 import javax.inject.Inject
 
 plugins {
@@ -56,17 +57,6 @@ subprojects {
         (options as? StandardJavadocDocletOptions)?.addBooleanOption("notimestamp", true)
     }
 
-    publishing {
-        publications {
-            create("${project.name}-maven", MavenPublication::class.java) {
-                groupId = project.rootProject.group.toString()
-                artifactId = project.name
-                version = project.rootProject.version.toString()
-                from(project.components["java"])
-            }
-        }
-    }
-
     val coordinates = "${project.rootProject.group}:${project.name}:${project.rootProject.version}"
     tasks.named("publishToMavenLocal") {
         doLast {
@@ -103,6 +93,8 @@ tasks.register<WritePublicationStateTask>("writePublicationState") {
 abstract class UpdateSummaryTask @Inject constructor(
     private val execOperations: ExecOperations
 ) : DefaultTask() {
+
+    private val projectDirectory: File = project.projectDir
 
     init {
         group = "help"
@@ -147,7 +139,7 @@ abstract class UpdateSummaryTask @Inject constructor(
     }
 
     private fun summarizeKeyValueFile(path: String): List<String> {
-        val current = project.projectDir.resolve(path)
+        val current = projectDirectory.resolve(path)
         if (!current.exists()) return emptyList()
 
         val previousContent = gitOrNull("show", "HEAD:$path") ?: ""
@@ -161,6 +153,8 @@ abstract class UpdateSummaryTask @Inject constructor(
             if (previousValue == currentValue) return@mapNotNull null
 
             when {
+                path == "gradle/wrapper/gradle-wrapper.properties" && key == "distributionUrl" ->
+                    "Gradle: ${extractGradleVersion(previousValue)} → ${extractGradleVersion(currentValue)}"
                 path == "gradle/wrapper/gradle-wrapper.properties" -> null
                 path == "gradle.properties" && key == "dockerBaseImageParam" ->
                     "Java image: ${display(previousValue)} → ${display(currentValue)}"
@@ -170,7 +164,7 @@ abstract class UpdateSummaryTask @Inject constructor(
     }
 
     private fun summarizeDockerfile(path: String): String? {
-        val current = project.projectDir.resolve(path)
+        val current = projectDirectory.resolve(path)
         if (!current.exists()) return null
 
         val previousFrom = extractDockerFromLines(gitOrNull("show", "HEAD:$path").orEmpty())
@@ -185,7 +179,7 @@ abstract class UpdateSummaryTask @Inject constructor(
     }
 
     private fun summarizeRegexChange(path: String, regex: Regex, label: String): String? {
-        val current = project.projectDir.resolve(path)
+        val current = projectDirectory.resolve(path)
         if (!current.exists()) return null
 
         val previousValue = regex.find(gitOrNull("show", "HEAD:$path").orEmpty())?.groupValues?.get(1)
@@ -226,12 +220,12 @@ abstract class UpdateSummaryTask @Inject constructor(
     private fun display(value: String?): String = value?.takeIf(String::isNotBlank) ?: "(missing)"
 
     private fun git(vararg args: String): String =
-        gitOrNull(*args) ?: error("Failed to run git ${args.joinToString(" ")} in ${project.projectDir}")
+        gitOrNull(*args) ?: error("Failed to run git ${args.joinToString(" ")} in $projectDirectory")
 
     private fun gitOrNull(vararg args: String): String? {
         val stdout = ByteArrayOutputStream()
         val result = execOperations.exec {
-            workingDir(project.projectDir)
+            workingDir(projectDirectory)
             commandLine("git", *args)
             standardOutput = stdout
             errorOutput = ByteArrayOutputStream()

@@ -11,4 +11,8 @@ data class MinimumDependencyVersion(val group: String, val name: String, val min
 
     /** Returns true if the [requested] dependency matches this constraint's group and (name or wildcard). */
     fun matches(requested: ModuleVersionSelector): Boolean = requested.group == group && (name == "*" || requested.name == name)
+
+    fun isViolatedBy(requested: ModuleVersionSelector): Boolean = matches(requested) && !isMetBy(requested.version)
+
+    private fun isMetBy(requestedVersion: String?): Boolean = requestedVersion != null && runCatching { DependencyVersion(requestedVersion) >= minimumVersion }.getOrDefault(false)
 }

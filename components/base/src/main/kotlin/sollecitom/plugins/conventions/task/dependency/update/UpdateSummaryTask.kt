@@ -13,6 +13,8 @@ abstract class UpdateSummaryTask @Inject constructor(
     private val execOperations: ExecOperations
 ) : DefaultTask() {
 
+    private val projectDirectory: File = project.projectDir
+
     init {
         group = "help"
         description = "Prints a concise summary of upgrade-related changes in the working tree."
@@ -58,7 +60,7 @@ abstract class UpdateSummaryTask @Inject constructor(
     }
 
     private fun summarizeKeyValueFile(path: String): List<String> {
-        val current = project.projectDir.resolve(path)
+        val current = projectDirectory.resolve(path)
         if (!current.exists()) return emptyList()
 
         val previousContent = gitOrNull("show", "HEAD:$path") ?: ""
@@ -91,7 +93,7 @@ abstract class UpdateSummaryTask @Inject constructor(
     }
 
     private fun summarizeDockerfile(path: String): String? {
-        val current = project.projectDir.resolve(path)
+        val current = projectDirectory.resolve(path)
         if (!current.exists()) return null
 
         val previousFrom = extractDockerFromLines(gitOrNull("show", "HEAD:$path").orEmpty())
@@ -180,12 +182,12 @@ abstract class UpdateSummaryTask @Inject constructor(
     private fun display(value: String?): String = value?.takeIf(String::isNotBlank) ?: "(missing)"
 
     private fun git(vararg args: String): String =
-        gitOrNull(*args) ?: error("Failed to run git ${args.joinToString(" ")} in ${project.projectDir}")
+        gitOrNull(*args) ?: error("Failed to run git ${args.joinToString(" ")} in $projectDirectory")
 
     private fun gitOrNull(vararg args: String): String? {
         val stdout = ByteArrayOutputStream()
         val result = execOperations.exec {
-            workingDir(project.projectDir)
+            workingDir(projectDirectory)
             commandLine("git", *args)
             standardOutput = stdout
             errorOutput = ByteArrayOutputStream()

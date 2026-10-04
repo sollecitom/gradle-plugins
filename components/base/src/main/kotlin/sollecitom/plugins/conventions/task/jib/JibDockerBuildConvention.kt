@@ -43,15 +43,15 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
             starterClassFullyQualifiedName.set(settings.starterClassFullyQualifiedName)
             dockerBaseImage.set(settings.dockerBaseImage)
             serviceImageName.set(settings.serviceImageName)
-            reproducibleBuild.convention(settings.reproducibleBuild).convention(Extension.defaultReproducibleBuild)
-            volumes.convention(settings.volumes).convention(Extension.defaultVolumes)
-            jvmFlags.convention(settings.jvmFlags).convention(Extension.defaultJvmFlags)
-            args.convention(settings.args).convention(Extension.defaultArgs)
-            tags.convention(settings.tags).convention(Extension.defaultTags)
-            imageFormat.convention(settings.imageFormat).convention(Extension.defaultImageFormat)
-            user.convention(settings.user).convention(Extension.defaultUser)
-            labels.convention(settings.labels).convention(Extension.defaultLabels)
-            environment.convention(settings.environment).convention(emptyMap())
+            reproducibleBuild.convention(settings.reproducibleBuild.orElse(Extension.defaultReproducibleBuild))
+            volumes.convention(settings.volumes.orElse(Extension.defaultVolumes))
+            jvmFlags.convention(settings.jvmFlags.orElse(Extension.defaultJvmFlags))
+            args.convention(settings.args.orElse(Extension.defaultArgs))
+            tags.convention(settings.tags.orElse(Extension.defaultTags))
+            imageFormat.convention(settings.imageFormat.orElse(Extension.defaultImageFormat))
+            user.convention(settings.user.orElse(Extension.defaultUser))
+            labels.convention(settings.labels.orElse(Extension.defaultLabels))
+            environment.convention(settings.environment.orElse(emptyMap()))
         }
 
         val nonReproducibleTimestampHolder = object {
@@ -111,7 +111,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
      * Extension for configuring Jib Docker image builds.
      *
      * Required properties: [starterClassFullyQualifiedName], [dockerBaseImage], [serviceImageName].
-     * All other properties have sensible defaults (OCI format, "nobody" user, non-reproducible build).
+     * All other properties have sensible defaults (OCI format, "nobody" user, reproducible build).
      */
     abstract class Extension {
 
@@ -122,7 +122,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         /** Target image name for the built image (required). */
         abstract val serviceImageName: Property<String>
 
-        /** Whether to produce reproducible builds with fixed timestamps. Defaults to false. */
+        /** Whether to produce reproducible builds with fixed timestamps. Defaults to true. */
         @get:Optional
         abstract val reproducibleBuild: Property<Boolean>
 

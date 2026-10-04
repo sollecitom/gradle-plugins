@@ -49,8 +49,9 @@ abstract class MavenPublishConvention : Plugin<Project> {
         }
 
         tasks.named("publishToMavenLocal") {
+            val coordinates = "${project.group}:${project.name}:${project.version}"
             doLast {
-                println("Published ${project.group}:${project.name}:${project.version}")
+                println("Published $coordinates")
             }
         }
         Unit

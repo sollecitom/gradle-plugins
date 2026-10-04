@@ -4,6 +4,7 @@ import nl.littlerobots.vcu.plugin.VersionCatalogUpdateExtension
 import nl.littlerobots.vcu.plugin.VersionCatalogUpdatePlugin
 import nl.littlerobots.vcu.plugin.resolver.ModuleVersionSelector
 import nl.littlerobots.vcu.plugin.resolver.VersionSelectors
+import nl.littlerobots.vcu.plugin.versionSelector
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
@@ -30,7 +31,8 @@ abstract class DependencyUpdateConvention : Plugin<Project> {
             keep {
                 keepUnusedVersions.set(true)
             }
-            versionSelector(extension.versionSelector.getOrElse(VersionSelectors.PREFER_STABLE))
+            val configuredVersionSelector = extension.versionSelector.orElse(VersionSelectors.PREFER_STABLE)
+            versionSelector { candidate -> configuredVersionSelector.get().select(candidate) }
         }
 
         tasks.register<UpdateInternalCatalogVersionsTask>("updateInternalCatalogVersions") {

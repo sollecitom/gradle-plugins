@@ -25,14 +25,14 @@ just rebuild
 ### Upgrade the Gradle wrapper to the latest available version
 
 ```bash
-just updateGradle
+just update-gradle
 
 ```
 
 ### Update all dependencies if more recent versions exist, and remove unused ones (it will update `gradle/libs.versions.toml`)
 
 ```bash
-just updateDependencies
+just update-dependencies
 
 ```
 
@@ -40,18 +40,40 @@ just updateDependencies
 
 In another project:
 
-In `settings.gradle`:
+In `settings.gradle.kts`:
 
-``
-includeBuild 'gradle-plugins'
-``
-
-In `build.gradle`:
-
-``
-buildscript {
-    dependencies {
-        classpath 'sollecitom:gradle-plugins:0'
-        }
+```kotlin
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        mavenCentral()
     }
-``
+}
+```
+
+In `gradle/libs.versions.toml`:
+
+```toml
+[versions]
+sollecitom-gradle-plugins = "<version>"
+
+[plugins]
+sollecitom-kotlin-library-conventions = { id = "sollecitom.kotlin-library-conventions", version.ref = "sollecitom-gradle-plugins" }
+```
+
+In the root `build.gradle.kts`:
+
+```kotlin
+plugins {
+    alias(libs.plugins.sollecitom.kotlin.library.conventions) apply false
+}
+```
+
+In each module's `build.gradle.kts`:
+
+```kotlin
+plugins {
+    id("sollecitom.kotlin-library-conventions")
+}
+```

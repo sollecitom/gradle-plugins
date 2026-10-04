@@ -36,8 +36,8 @@ abstract class TestTaskConventions : Plugin<Project> {
             jvmArgs = JvmConfiguration.testArgs
 
             reports {
-                junitXml.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/test/${project.name}"))
-                html.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/reports/test/${project.name}"))
+                junitXml.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/${this@configureEach.name}/${project.name}"))
+                html.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/reports/${this@configureEach.name}/${project.name}"))
             }
             addTestListener(object : TestListener {
                 override fun beforeSuite(suite: TestDescriptor) {}

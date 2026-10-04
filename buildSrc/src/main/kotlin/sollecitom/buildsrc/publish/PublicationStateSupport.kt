@@ -136,8 +136,7 @@ fun Project.publishableArtifacts(): List<PublishedArtifact> =
         jars + metadata
     }
 
-/** Mirrors the publication created in the root build script, which owns the naming. */
-val Project.publicationName: String get() = "$name-maven"
+val Project.publicationName: String get() = "pluginMaven"
 
 /** The form Gradle uses when it derives `generatePomFileFor<Publication>Publication` task names. */
 val Project.capitalizedPublicationName: String get() = publicationName.replaceFirstChar { it.uppercase() }
@@ -209,7 +208,7 @@ object PublicationHashGate {
                     if (currentArtifactHashes[identity] != trackedState.artifactHashes[identity]) identity else null
                 }
 
-            val targetVersion = if (changedArtifacts.isEmpty()) trackedState.publishedVersion else nextPatchVersion(trackedState.publishedVersion, currentVersion)
+            val targetVersion = if (changedArtifacts.isEmpty()) trackedState.publishedVersion else nextVersion(trackedState.publishedVersion, currentVersion)
             val status = when {
                 changedArtifacts.isNotEmpty() -> PublicationState.Status.PUBLISH_REQUIRED
                 !artifactsAvailableLocally(artifacts, targetVersion, mavenLocalRepository) -> PublicationState.Status.LOCAL_PUBLISH_REQUIRED
@@ -276,7 +275,7 @@ object PublicationHashGate {
                 else -> null
             }
         }
-        val targetVersion = if (changedArtifacts.isEmpty()) latestPublishedVersion else nextPatchVersion(latestPublishedVersion, currentVersion)
+        val targetVersion = if (changedArtifacts.isEmpty()) latestPublishedVersion else nextVersion(latestPublishedVersion, currentVersion)
 
         return PublicationState(
             status = if (changedArtifacts.isEmpty()) PublicationState.Status.UNCHANGED else PublicationState.Status.PUBLISH_REQUIRED,
@@ -320,7 +319,11 @@ object PublicationHashGate {
         return commonVersions.maxWithOrNull(compareBy { Semver(it, Semver.SemverType.STRICT) })
     }
 
-    private fun nextPatchVersion(latestPublishedVersion: String, currentVersion: String): String {
+    internal fun nextVersion(latestPublishedVersion: String, currentVersion: String): String {
+        if (isStableSemver(currentVersion) && isStableSemver(latestPublishedVersion) &&
+            Semver(currentVersion, Semver.SemverType.STRICT) > Semver(latestPublishedVersion, Semver.SemverType.STRICT)
+        ) return currentVersion
+
         val baseVersion = sequenceOf(currentVersion, latestPublishedVersion)
             .filter(::isStableSemver)
             .map { Semver(it, Semver.SemverType.STRICT) }

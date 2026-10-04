@@ -4,6 +4,15 @@ dependencies {
     api(libs.kotlin.gradle.plugin)
     api(project(":kotlin-jvm"))
     api(libs.jib.gradle.plugin)
+
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.assertk)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 gradlePlugin {

@@ -24,7 +24,7 @@ generate-sbom:
     bash ../scripts/run-generate-sbom.sh gradle-plugins
 
 cleanup:
-    bash ../scripts/cleanup-maven-local.sh --repo-root . --keep 5 --max-age-days 30
+    bash ../scripts/cleanup-maven-local.sh --repo-root . --keep 5 --max-age-days 30 --plugin-markers sollecitom
 
 update-internal-dependencies:
     @:

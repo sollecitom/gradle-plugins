@@ -71,7 +71,7 @@ internal object PublicationHashGate {
                     if (currentArtifactHashes[identity] != trackedState.artifactHashes[identity]) identity else null
                 }
 
-            val targetVersion = if (changedArtifacts.isEmpty()) trackedState.publishedVersion else nextPatchVersion(trackedState.publishedVersion, currentVersion)
+            val targetVersion = if (changedArtifacts.isEmpty()) trackedState.publishedVersion else nextVersion(trackedState.publishedVersion, currentVersion)
             val status = when {
                 changedArtifacts.isNotEmpty() -> PublicationState.Status.PUBLISH_REQUIRED
                 !artifactsAvailableLocally(artifacts, targetVersion, mavenLocalRepository) -> PublicationState.Status.LOCAL_PUBLISH_REQUIRED
@@ -138,7 +138,7 @@ internal object PublicationHashGate {
                 else -> null
             }
         }
-        val targetVersion = if (changedArtifacts.isEmpty()) latestPublishedVersion else nextPatchVersion(latestPublishedVersion, currentVersion)
+        val targetVersion = if (changedArtifacts.isEmpty()) latestPublishedVersion else nextVersion(latestPublishedVersion, currentVersion)
 
         return PublicationState(
             status = if (changedArtifacts.isEmpty()) PublicationState.Status.UNCHANGED else PublicationState.Status.PUBLISH_REQUIRED,
@@ -183,7 +183,11 @@ internal object PublicationHashGate {
         return commonVersions.maxWithOrNull(compareBy(::Semver))
     }
 
-    private fun nextPatchVersion(latestPublishedVersion: String, currentVersion: String): String {
+    internal fun nextVersion(latestPublishedVersion: String, currentVersion: String): String {
+        if (isStableSemver(currentVersion) && isStableSemver(latestPublishedVersion) &&
+            Semver(currentVersion, Semver.SemverType.STRICT) > Semver(latestPublishedVersion, Semver.SemverType.STRICT)
+        ) return currentVersion
+
         val baseVersion = sequenceOf(currentVersion, latestPublishedVersion)
             .filter(::isStableSemver)
             .map { Semver(it, Semver.SemverType.STRICT) }

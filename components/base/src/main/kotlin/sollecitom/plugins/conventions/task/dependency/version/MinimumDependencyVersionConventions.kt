@@ -16,7 +16,7 @@ abstract class MinimumDependencyVersionConventions : Plugin<Project> {
             resolutionStrategy.eachDependency {
                 // https://docs.gradle.org/current/userguide/resolution_rules.html
                 settings.vulnerableDependencies.forEach { vulnerableDependency ->
-                    if (vulnerableDependency.matches(requested)) {
+                    if (vulnerableDependency.isViolatedBy(requested)) {
                         useVersion(vulnerableDependency.minimumVersion.stringValue)
                     }
                 }

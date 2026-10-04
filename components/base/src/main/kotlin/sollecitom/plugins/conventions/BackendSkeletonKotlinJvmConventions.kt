@@ -16,6 +16,7 @@ import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import sollecitom.plugins.RepositoryConfiguration
+import sollecitom.plugins.conventions.task.dependency.version.MinimumDependencyVersion
 
 abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
 
@@ -56,7 +57,7 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
 
         configurations.all {
             resolutionStrategy.eachDependency {
-                if (requested.group == "org.apache.commons" && requested.name == "commons-compress") {
+                if (MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0").isViolatedBy(requested)) {
                     useVersion("1.26.0")
                     because("CVE fix: versions before 1.26.0 have known vulnerabilities")
                 }
@@ -73,8 +74,8 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
                 events("passed", "skipped", "failed")
             }
             reports {
-                junitXml.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/test/${project.name}"))
-                html.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/reports/test/${project.name}"))
+                junitXml.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/${this@configureEach.name}/${project.name}"))
+                html.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/reports/${this@configureEach.name}/${project.name}"))
             }
         }
 
