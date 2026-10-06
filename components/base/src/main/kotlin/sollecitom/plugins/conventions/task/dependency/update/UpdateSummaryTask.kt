@@ -32,24 +32,10 @@ abstract class UpdateSummaryTask @Inject constructor(
         } else {
             emptyList()
         }
-        val hasImagePropertySummary = gradlePropertiesSummary.any {
-            it.startsWith("Java image") || it.startsWith("Java runtime image")
-        }
-
         val summaryLines = mutableListOf<String>()
 
-        changedFiles.forEach { file ->
-            when {
-                file in keyValueFiles -> {
-                    val lines = if (file == "gradle.properties") gradlePropertiesSummary else summarizeKeyValueFile(file)
-                    if (lines.isNotEmpty()) summaryLines += lines
-                }
-                file == "Dockerfile" || file.endsWith("/Dockerfile") -> {
-                    if (!hasImagePropertySummary) {
-                        summarizeDockerfile(file)?.let(summaryLines::add)
-                    }
-                }
-            }
+        changedFiles.filter { it in keyValueFiles }.forEach { file ->
+            summaryLines += if (file == "gradle.properties") gradlePropertiesSummary else summarizeKeyValueFile(file)
         }
 
         summaryLines += workspaceEventLines()
@@ -79,8 +65,6 @@ abstract class UpdateSummaryTask @Inject constructor(
                     "Gradle: ${extractGradleVersion(previousValue)} → ${extractGradleVersion(currentValue)}"
                 path == "gradle.properties" && key == "dockerBaseImageParam" ->
                     summarizeImageChange("Java image", previousValue, currentValue)
-                path == "gradle.properties" && key == "dockerRuntimeBaseImageParam" ->
-                    summarizeImageChange("Java runtime image", previousValue, currentValue)
                 path == "gradle.properties" && key in suppressedGradleProperties -> null
                 path == "gradle/wrapper/gradle-wrapper.properties" -> null
                 path == "container-versions.properties" ->
@@ -91,37 +75,6 @@ abstract class UpdateSummaryTask @Inject constructor(
             }
         }
     }
-
-    private fun summarizeDockerfile(path: String): String? {
-        val current = projectDirectory.resolve(path)
-        if (!current.exists()) return null
-
-        val previousFrom = extractDockerFromLines(gitOrNull("show", "HEAD:$path").orEmpty())
-        val currentFrom = extractDockerFromLines(current.readText())
-
-        return if (currentFrom.isNotEmpty() && previousFrom != currentFrom) {
-            val previousTags = previousFrom.mapNotNull(::dockerStageTag)
-            val currentTags = currentFrom.mapNotNull(::dockerStageTag)
-
-            when {
-                previousTags.isEmpty() || currentTags.isEmpty() ->
-                    "Docker base images changed"
-                previousTags == currentTags ->
-                    "Docker base digests refreshed: ${currentTags.joinToString("; ")}"
-                else ->
-                    "Docker base: ${previousTags.joinToString("; ")} → ${currentTags.joinToString("; ")}"
-            }
-        } else {
-            null
-        }
-    }
-
-    private fun extractDockerFromLines(content: String): List<String> =
-        content.lineSequence()
-            .map(String::trim)
-            .filter { it.startsWith("FROM ") }
-            .map { it.removePrefix("FROM ").trim() }
-            .toList()
 
     private fun summarizeImageChange(label: String, previousValue: String?, currentValue: String?): String {
         val previousTag = imageTag(previousValue)
@@ -171,9 +124,6 @@ abstract class UpdateSummaryTask @Inject constructor(
     private fun imageDigest(value: String?): String? =
         value?.substringAfter('@', "")?.takeIf(String::isNotBlank)
 
-    private fun dockerStageTag(stage: String): String? =
-        imageTag(stage.substringBefore(" AS ").trim())
-
     private fun extractGradleVersion(value: String?): String =
         value
             ?.let { Regex("""gradle-([0-9][A-Za-z0-9.+-]*)-(?:bin|all)\.zip""").find(it)?.groupValues?.get(1) }
@@ -207,7 +157,6 @@ abstract class UpdateSummaryTask @Inject constructor(
             "dockerBaseImageRepository",
             "dockerBaseImageVariant",
             "dockerBaseImageMajor",
-            "dockerRuntimeBaseImageVariant",
         )
     }
 }

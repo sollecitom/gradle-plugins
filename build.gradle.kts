@@ -120,9 +120,6 @@ abstract class UpdateSummaryTask @Inject constructor(
                     val lines = summarizeKeyValueFile(file)
                     if (lines.isNotEmpty()) summaryLines += lines
                 }
-                file == "Dockerfile" || file.endsWith("/Dockerfile") -> {
-                    summarizeDockerfile(file)?.let(summaryLines::add)
-                }
                 file.endsWith("/Plugins.kt") -> {
                     summaryLines += summarizeRegexChange(file, Regex("""VERSION_(\d+)"""), "Java toolchain")
                         ?: return@forEach
@@ -163,21 +160,6 @@ abstract class UpdateSummaryTask @Inject constructor(
         }
     }
 
-    private fun summarizeDockerfile(path: String): String? {
-        val current = projectDirectory.resolve(path)
-        if (!current.exists()) return null
-
-        val previousFrom = extractDockerFromLines(gitOrNull("show", "HEAD:$path").orEmpty())
-        val currentFrom = extractDockerFromLines(current.readText())
-
-        return if (currentFrom.isNotEmpty() && previousFrom != currentFrom) {
-            val previousDisplay = previousFrom.takeIf { it.isNotEmpty() }?.joinToString("; ")
-            "Docker base: ${display(previousDisplay)} → ${currentFrom.joinToString("; ")}"
-        } else {
-            null
-        }
-    }
-
     private fun summarizeRegexChange(path: String, regex: Regex, label: String): String? {
         val current = projectDirectory.resolve(path)
         if (!current.exists()) return null
@@ -191,13 +173,6 @@ abstract class UpdateSummaryTask @Inject constructor(
             null
         }
     }
-
-    private fun extractDockerFromLines(content: String): List<String> =
-        content.lineSequence()
-            .map(String::trim)
-            .filter { it.startsWith("FROM ") }
-            .map { it.removePrefix("FROM ").trim() }
-            .toList()
 
     private fun parseKeyValueContent(content: String): Map<String, String> {
         val regex = Regex("""^\s*([A-Za-z0-9_.-]+)\s*=\s*"?([^"]*)"?\s*$""")
