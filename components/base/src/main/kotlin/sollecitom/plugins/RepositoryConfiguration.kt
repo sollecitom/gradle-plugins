@@ -64,7 +64,7 @@ object RepositoryConfiguration {
         fun apply(config: RepositoryHandler, project: Project) {
 
             config.mavenLocal()
-            GithubPackages.apply(config, project)
+            // GithubPackages.apply(config, project) // no GitHub build today
         }
     }
 
@@ -92,7 +92,7 @@ object RepositoryConfiguration {
                 }
             }
 
-            GithubPackages.apply(config, project)
+            // GithubPackages.apply(config, project) // no GitHub build today
         }
     }
 }

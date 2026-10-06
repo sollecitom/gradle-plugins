@@ -48,12 +48,6 @@ abstract class WriteJibImageFingerprintTask : DefaultTask() {
     abstract val tags: ListProperty<String>
 
     @get:Input
-    abstract val imageFormat: Property<String>
-
-    @get:Input
-    abstract val user: Property<String>
-
-    @get:Input
     abstract val labels: MapProperty<String, String>
 
     @get:Input
@@ -70,8 +64,6 @@ abstract class WriteJibImageFingerprintTask : DefaultTask() {
         jvmFlags.getOrElse(emptyList()).forEach { digest.updateLine("jvmFlag=$it") }
         args.getOrElse(emptyList()).forEach { digest.updateLine("arg=$it") }
         tags.getOrElse(emptyList()).sorted().forEach { digest.updateLine("tag=$it") }
-        digest.updateLine("imageFormat=${imageFormat.getOrElse(JibDockerBuildConvention.Extension.defaultImageFormat)}")
-        digest.updateLine("user=${user.getOrElse(JibDockerBuildConvention.Extension.defaultUser)}")
         labels.getOrElse(emptyMap()).toSortedMap().forEach { (key, value) -> digest.updateLine("label=$key=$value") }
         environment.getOrElse(emptyMap()).toSortedMap().forEach { (key, value) -> digest.updateLine("env=$key=$value") }
         runtimeClasspath.files.sortedBy(File::getAbsolutePath).forEach { file ->

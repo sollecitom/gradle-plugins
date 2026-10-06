@@ -48,8 +48,6 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
             jvmFlags.convention(settings.jvmFlags.orElse(Extension.defaultJvmFlags))
             args.convention(settings.args.orElse(Extension.defaultArgs))
             tags.convention(settings.tags.orElse(Extension.defaultTags))
-            imageFormat.convention(settings.imageFormat.orElse(Extension.defaultImageFormat))
-            user.convention(settings.user.orElse(Extension.defaultUser))
             labels.convention(settings.labels.orElse(Extension.defaultLabels))
             environment.convention(settings.environment.orElse(emptyMap()))
         }
@@ -141,14 +139,6 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         /** Docker image tags. Defaults to empty. */
         @get:Optional
         abstract val tags: ListProperty<String>
-
-        /** Container image format. Defaults to "OCI". */
-        @get:Optional
-        abstract val imageFormat: Property<String>
-
-        /** User to run the container as. Defaults to "nobody". */
-        @get:Optional
-        abstract val user: Property<String>
 
         /** Image labels. Defaults to empty. */
         @get:Optional
