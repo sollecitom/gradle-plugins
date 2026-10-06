@@ -136,6 +136,7 @@ fun Project.publishableArtifacts(): List<PublishedArtifact> =
         jars + metadata
     }
 
+/** The publication `java-gradle-plugin` creates, so each plugin is published once. */
 val Project.publicationName: String get() = "pluginMaven"
 
 /** The form Gradle uses when it derives `generatePomFileFor<Publication>Publication` task names. */
@@ -319,7 +320,7 @@ object PublicationHashGate {
         return commonVersions.maxWithOrNull(compareBy { Semver(it, Semver.SemverType.STRICT) })
     }
 
-    internal fun nextVersion(latestPublishedVersion: String, currentVersion: String): String {
+    private fun nextVersion(latestPublishedVersion: String, currentVersion: String): String {
         if (isStableSemver(currentVersion) && isStableSemver(latestPublishedVersion) &&
             Semver(currentVersion, Semver.SemverType.STRICT) > Semver(latestPublishedVersion, Semver.SemverType.STRICT)
         ) return currentVersion

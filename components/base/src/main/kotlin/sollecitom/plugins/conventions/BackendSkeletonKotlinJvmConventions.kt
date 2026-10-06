@@ -43,10 +43,7 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
             compilerOptions {
                 javaParameters.set(true)
                 progressiveMode.set(true)
-                freeCompilerArgs.addAll(
-                    "-Xjsr305=strict",
-                    "-Xcontext-parameters",
-                )
+                freeCompilerArgs.add("-Xjsr305=strict")
                 optIn.add("kotlin.uuid.ExperimentalUuidApi")
             }
         }
@@ -55,10 +52,11 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
 
         RepositoryConfiguration.Modules.apply(repositories, this)
 
+        val commonsCompress = MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0")
         configurations.all {
             resolutionStrategy.eachDependency {
-                if (MinimumDependencyVersion(group = "org.apache.commons", name = "commons-compress", minimumVersion = "1.26.0").isViolatedBy(requested)) {
-                    useVersion("1.26.0")
+                if (commonsCompress.isViolatedBy(requested)) {
+                    useVersion(commonsCompress.minimumVersion.stringValue)
                     because("CVE fix: versions before 1.26.0 have known vulnerabilities")
                 }
             }

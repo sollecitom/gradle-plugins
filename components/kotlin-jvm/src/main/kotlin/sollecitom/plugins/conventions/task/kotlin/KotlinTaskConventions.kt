@@ -24,7 +24,7 @@ abstract class KotlinTaskConventions : Plugin<Project> {
     }
 
     companion object {
-        private val compilerArgs = listOf("-Xcontext-parameters", "-Xjsr305=strict")
+        private val compilerArgs = listOf("-Xjsr305=strict")
         private val optIns = listOf("kotlin.uuid.ExperimentalUuidApi")
         private val targetJvmVersion = JvmTarget.JVM_25
     }
