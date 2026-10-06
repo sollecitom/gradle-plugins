@@ -78,7 +78,7 @@ abstract class WriteJibImageFingerprintTask : DefaultTask() {
             digest.updateFile(file)
         }
 
-        val fingerprint = digest.digest().joinToString(separator = "") { "%02x".format(it) }
+        val fingerprint = digest.digest().toHexString()
         fingerprintFile.get().asFile.apply {
             parentFile.mkdirs()
             writeText("$fingerprint\n")

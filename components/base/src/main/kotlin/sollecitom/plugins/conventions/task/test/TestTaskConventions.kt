@@ -23,6 +23,7 @@ abstract class TestTaskConventions : Plugin<Project> {
         project.tasks.withType<Test>().configureEach {
             usesService(serviceProvider)
             useJUnitPlatform()
+            systemProperty("junit.jupiter.execution.timeout.testable.method.default", DEFAULT_TEST_TIMEOUT)
             if (isRunningOnRemoteBuildEnvironment()) {
                 maxParallelForks = 1
                 maxHeapSize = "1g"
@@ -61,4 +62,8 @@ abstract class TestTaskConventions : Plugin<Project> {
     }
 
     private fun isRunningOnRemoteBuildEnvironment() = System.getenv("CI") != null
+
+    private companion object {
+        const val DEFAULT_TEST_TIMEOUT = "2m"
+    }
 }

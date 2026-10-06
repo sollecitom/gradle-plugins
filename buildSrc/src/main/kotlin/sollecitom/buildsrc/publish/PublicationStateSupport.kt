@@ -350,7 +350,7 @@ object PublicationHashGate {
                 if (bytesRead > 0) digest.update(buffer, 0, bytesRead)
             }
         }
-        return digest.digest().joinToString(separator = "") { byte -> "%02x".format(byte) }
+        return digest.digest().toHexString()
     }
 }
 
