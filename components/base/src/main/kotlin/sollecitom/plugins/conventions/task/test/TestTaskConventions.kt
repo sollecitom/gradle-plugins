@@ -12,7 +12,7 @@ import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.withType
 import sollecitom.plugins.JvmConfiguration
 
-/** Convention plugin that configures all Test tasks with JUnit Platform, parallel execution, logging, and aggregated metrics reporting. Reduces parallelism on CI environments. */
+/** Convention plugin that configures all Test tasks with JUnit Platform, logging, and aggregated metrics reporting. */
 abstract class TestTaskConventions : Plugin<Project> {
 
     override fun apply(project: Project) {
@@ -25,10 +25,7 @@ abstract class TestTaskConventions : Plugin<Project> {
             useJUnitPlatform()
             systemProperty("junit.jupiter.execution.timeout.testable.method.default", DEFAULT_TEST_TIMEOUT)
             if (isRunningOnRemoteBuildEnvironment()) {
-                maxParallelForks = 1
                 maxHeapSize = "1g"
-            } else {
-                maxParallelForks = Runtime.getRuntime().availableProcessors() * 2
             }
             testLogging {
                 showStandardStreams = false

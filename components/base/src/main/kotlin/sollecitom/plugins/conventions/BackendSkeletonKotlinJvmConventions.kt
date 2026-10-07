@@ -64,7 +64,6 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
 
         tasks.withType<Test>().configureEach {
             useJUnitPlatform()
-            maxParallelForks = if (System.getenv("CI") != null) 1 else (Runtime.getRuntime().availableProcessors() * 2)
             if (System.getenv("CI") != null) maxHeapSize = "1g"
             testLogging {
                 showStandardStreams = false
