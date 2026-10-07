@@ -2,6 +2,7 @@ package sollecitom.plugins.conventions.task.jib
 
 import com.google.cloud.tools.jib.gradle.JibExtension
 import com.google.cloud.tools.jib.gradle.JibPlugin
+import com.google.cloud.tools.jib.gradle.JibTask
 import com.google.cloud.tools.jib.gradle.PlatformParameters
 import com.google.cloud.tools.jib.gradle.PlatformParametersSpec
 import org.gradle.api.Plugin
@@ -17,6 +18,7 @@ import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.withType
 import org.gradle.nativeplatform.platform.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.ArchitectureInternal
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
@@ -32,14 +34,21 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
         pluginManager.apply(JibPlugin::class)
         val settings = project.extensions.create<Extension>("jibDockerBuildConvention")
         val mainSourceSet = extensions.getByType<SourceSetContainer>().named("main")
+        val imageFingerprintFile = layout.buildDirectory.file(imageFingerprintFileName)
+        val imageFingerprint = imageFingerprintFile.map { it.asFile.readText().trim() }
+        val imageReferences = settings.serviceImageName.zip(settings.tags.orElse(Extension.defaultTags)) { imageName, tags -> imageReferences(imageName, tags) }
+        tasks.withType<JibTask>().configureEach {
+            dependsOn(imageFingerprintTaskName)
+        }
         tasks.named("jibDockerBuild") {
             notCompatibleWithConfigurationCache("Jib's BuildDockerTask stores Project state and currently fails configuration-cache reuse.")
+            onlyIf("the local Docker image is missing or was built from different inputs") { !localImagesHaveFingerprint(imageReferences.get(), imageFingerprint.get()) }
         }
         tasks.register<WriteJibImageFingerprintTask>(imageFingerprintTaskName) {
             description = "Writes a stable fingerprint for the locally built Jib image."
             group = "build"
             runtimeClasspath.from(mainSourceSet.map { it.runtimeClasspath })
-            fingerprintFile.set(layout.buildDirectory.file(imageFingerprintFileName))
+            fingerprintFile.set(imageFingerprintFile)
             starterClassFullyQualifiedName.set(settings.starterClassFullyQualifiedName)
             dockerBaseImage.set(settings.dockerBaseImage)
             serviceImageName.set(settings.serviceImageName)
@@ -83,7 +92,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
                 setFormat(Extension.defaultImageFormat)
                 creationTime.set(creationTimeProvider)
                 filesModificationTime.set(filesModificationTimeProvider)
-                labels.set(settings.labels.orElse(Extension.defaultLabels))
+                labels.set(settings.labels.orElse(Extension.defaultLabels).zip(imageFingerprint) { labels, fingerprint -> labels + (imageFingerprintLabel to fingerprint) })
                 containerizingMode = "exploded"
                 setMainClass(settings.starterClassFullyQualifiedName)
             }
@@ -98,6 +107,19 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
                 setTags(settings.tags.map(List<String>::toSet).orElse(emptySet()))
             }
         }
+    }
+
+    private fun imageReferences(imageName: String, tags: List<String>) = listOf(imageName) + tags.map { tag -> "${imageName.withoutTag()}:$tag" }
+
+    private fun String.withoutTag() = if (':' in substringAfterLast('/')) substringBeforeLast(':') else this
+
+    private fun localImagesHaveFingerprint(imageReferences: List<String>, fingerprint: String): Boolean {
+
+        val inspection = ProcessBuilder(listOf("docker", "image", "inspect", "--format", "{{ index .Config.Labels \"$imageFingerprintLabel\" }}") + imageReferences)
+            .redirectError(ProcessBuilder.Redirect.DISCARD)
+            .start()
+        val labelValues = inspection.inputStream.bufferedReader().readLines()
+        return inspection.waitFor() == 0 && labelValues.size == imageReferences.size && labelValues.all { it.trim() == fingerprint }
     }
 
     private val currentOperatingSystem: OperatingSystem get() = DefaultNativePlatform.getCurrentOperatingSystem()
@@ -163,6 +185,7 @@ abstract class JibDockerBuildConvention : Plugin<Project> {
     companion object {
         const val imageFingerprintFileName = "jib-image.fingerprint"
         const val imageFingerprintTaskName = "writeJibImageFingerprint"
+        const val imageFingerprintLabel = "sollecitom.image.fingerprint"
         private const val EPOCH_TIMESTAMP = "EPOCH"
         private const val EPOCH_PLUS_SECOND_TIMESTAMP = "EPOCH_PLUS_SECOND"
     }
