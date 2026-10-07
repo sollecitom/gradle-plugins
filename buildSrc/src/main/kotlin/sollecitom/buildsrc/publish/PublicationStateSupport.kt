@@ -148,6 +148,7 @@ data class PublishedArtifact(
 ) {
     private val coordinates = coordinate.substringBefore('@').split(':')
     private val extension = coordinate.substringAfter('@')
+    val version: String get() = coordinates[2]
     val identityKey: String = buildString {
         append(coordinates[0])
         append(':')
@@ -305,7 +306,7 @@ object PublicationHashGate {
     ): String? {
 
         val versionSets = artifacts.map { artifact ->
-            val artifactRoot = artifact.publishedFile(artifact.coordinate.substringBefore('@').split(':')[2], mavenLocalRepository).parentFile?.parentFile
+            val artifactRoot = artifact.publishedFile(artifact.version, mavenLocalRepository).parentFile?.parentFile
                 ?: return null
             artifactRoot.listFiles()
                 .orEmpty()

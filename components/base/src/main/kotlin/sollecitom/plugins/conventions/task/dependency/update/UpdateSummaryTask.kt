@@ -51,7 +51,7 @@ abstract class UpdateSummaryTask @Inject constructor(
 
         val previousContent = gitOrNull("show", "HEAD:$path") ?: ""
         val previousValues = parseKeyValueContent(previousContent)
-        val currentValues = parseKeyValueContent(current.readText())
+        val currentValues = current.readText().let(::parseKeyValueContent)
         val keys = (previousValues.keys + currentValues.keys).sorted()
 
         return keys.mapNotNull { key ->
