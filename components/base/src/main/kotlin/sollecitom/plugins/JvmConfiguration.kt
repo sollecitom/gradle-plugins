@@ -8,5 +8,7 @@ object JvmConfiguration {
     val testArgs: List<String> = listOf(
         "--enable-native-access=ALL-UNNAMED",
         "--sun-misc-unsafe-memory-access=allow",
+        "-XX:TieredStopAtLevel=1",
+        "-XX:+UseSerialGC",
     )
 }
