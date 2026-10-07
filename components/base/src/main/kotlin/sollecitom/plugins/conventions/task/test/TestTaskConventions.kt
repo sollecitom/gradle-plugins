@@ -2,13 +2,11 @@ package sollecitom.plugins.conventions.task.test
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.TestDescriptor
 import org.gradle.api.tasks.testing.TestListener
 import org.gradle.api.tasks.testing.TestResult
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.withType
 import sollecitom.plugins.JvmConfiguration
 
@@ -17,8 +15,9 @@ abstract class TestTaskConventions : Plugin<Project> {
 
     override fun apply(project: Project) {
 
-        @Suppress("UNCHECKED_CAST")
-        val serviceProvider = project.rootProject.extra[TestMetricsBuildService.SERVICE_NAME] as Provider<TestMetricsBuildService>
+        val serviceProvider = project.gradle.sharedServices.registerIfAbsent(TestMetricsBuildService.SERVICE_NAME, TestMetricsBuildService::class.java) {
+            parameters.projectName.set(project.rootProject.name)
+        }
 
         project.tasks.withType<Test>().configureEach {
             usesService(serviceProvider)

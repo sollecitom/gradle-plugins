@@ -5,11 +5,10 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.javadoc.Javadoc
-import org.gradle.api.tasks.testing.Test
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
+import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.withType
@@ -17,6 +16,7 @@ import org.gradle.plugins.ide.idea.model.IdeaModel
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import sollecitom.plugins.RepositoryConfiguration
 import sollecitom.plugins.conventions.task.dependency.version.MinimumDependencyVersion
+import sollecitom.plugins.conventions.task.test.TestTaskConventions
 
 abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
 
@@ -24,6 +24,7 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
         pluginManager.apply("java-library")
         pluginManager.apply("org.jetbrains.kotlin.jvm")
         pluginManager.apply("idea")
+        pluginManager.apply(TestTaskConventions::class)
 
         val projectGroup = findProperty("projectGroup")?.toString()
         val currentVersion = findProperty("currentVersion")?.toString()
@@ -59,20 +60,6 @@ abstract class BackendSkeletonKotlinJvmConventions : Plugin<Project> {
                     useVersion(commonsCompress.minimumVersion.stringValue)
                     because("CVE fix: versions before 1.26.0 have known vulnerabilities")
                 }
-            }
-        }
-
-        tasks.withType<Test>().configureEach {
-            useJUnitPlatform()
-            if (System.getenv("CI") != null) maxHeapSize = "1g"
-            testLogging {
-                showStandardStreams = false
-                exceptionFormat = TestExceptionFormat.FULL
-                events("passed", "skipped", "failed")
-            }
-            reports {
-                junitXml.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/${this@configureEach.name}/${project.name}"))
-                html.outputLocation.set(project.file("${project.rootProject.layout.buildDirectory.get()}/test-results/reports/${this@configureEach.name}/${project.name}"))
             }
         }
 
