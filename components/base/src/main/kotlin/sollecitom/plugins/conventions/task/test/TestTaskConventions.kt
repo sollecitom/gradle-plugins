@@ -23,6 +23,9 @@ abstract class TestTaskConventions : Plugin<Project> {
             usesService(serviceProvider)
             useJUnitPlatform()
             systemProperty("junit.jupiter.execution.timeout.testable.method.default", DEFAULT_TEST_TIMEOUT)
+            systemProperty("junit.jupiter.execution.parallel.enabled", true)
+            systemProperty("junit.jupiter.execution.parallel.mode.classes.default", "concurrent")
+            systemProperty("junit.jupiter.execution.parallel.mode.default", "same_thread")
             if (isRunningOnRemoteBuildEnvironment()) {
                 maxHeapSize = "1g"
             }
