@@ -5,10 +5,7 @@ import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.kotlin.dsl.register
 import org.gradle.process.ExecOperations
 import org.gradle.work.DisableCachingByDefault
-import sollecitom.buildsrc.publish.capitalizedPublicationName
-import sollecitom.buildsrc.publish.publishableArtifacts
-import sollecitom.buildsrc.publish.publishableProjects
-import sollecitom.buildsrc.publish.WritePublicationStateTask
+import sollecitom.buildsrc.publish.registerPluginPublicationState
 import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.inject.Inject
@@ -66,28 +63,7 @@ subprojects {
 }
 
 tasks.register<UpdateSummaryTask>("updateSummary")
-tasks.register<WritePublicationStateTask>("writePublicationState") {
-    dependsOn(
-        publishableProjects().flatMap { candidate ->
-            listOf(
-                "${candidate.path}:jar",
-                "${candidate.path}:sourcesJar",
-                "${candidate.path}:javadocJar",
-                "${candidate.path}:generatePomFileFor${candidate.capitalizedPublicationName}Publication",
-                "${candidate.path}:generateMetadataFileFor${candidate.capitalizedPublicationName}Publication",
-            )
-        }
-    )
-    currentVersion.set(project.version.toString())
-    artifactCoordinates.set(publishableArtifacts().map { it.coordinate })
-    artifactPaths.set(publishableArtifacts().map { it.buildFile.absolutePath })
-    artifactFiles.setFrom(publishableArtifacts().map { it.buildFile })
-    val trackedState = layout.projectDirectory.file("publication-state.properties")
-    if (trackedState.asFile.exists()) {
-        trackedStateFile.set(trackedState)
-    }
-    outputFile.set(layout.buildDirectory.file("publication-state/publication-state.properties"))
-}
+registerPluginPublicationState()
 
 @DisableCachingByDefault(because = "This task reads git state and working tree files that are not declared as cacheable inputs.")
 abstract class UpdateSummaryTask @Inject constructor(
