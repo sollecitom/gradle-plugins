@@ -26,6 +26,7 @@ abstract class TestTaskConventions : Plugin<Project> {
             systemProperty("junit.jupiter.execution.parallel.enabled", true)
             systemProperty("junit.jupiter.execution.parallel.mode.classes.default", "concurrent")
             systemProperty("junit.jupiter.execution.parallel.mode.default", "same_thread")
+            systemProperty("junit.jupiter.execution.parallel.config.executor-service", "FORK_JOIN_POOL")
             if (isRunningOnRemoteBuildEnvironment()) {
                 maxHeapSize = "1g"
             }
